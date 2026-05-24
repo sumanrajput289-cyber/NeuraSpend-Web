@@ -1,0 +1,55 @@
+# Python bytecode / compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+bin/
+include/
+lib/
+share/
+
+# SQLite database files (We seed them dynamically on Vercel/Startup, do not upload raw database locks)
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+database/expenses.db
+
+# Dynamic reports, receipts and exported sheets
+exports/
+static/assets/receipt_*
+static/assets/avatars/avatar_*
+static/assets/financial_report_suite.pdf
+static/assets/monthly_financial_summary.pdf
+static/assets/financial_registry.xlsx
+static/assets/transaction_ledger_export.csv
+
+# System logs and backups
+logs/
+*.log
+backups/
+backups_extracted/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE and Project scratch paths
+.idea/
+.vscode/
+.gemini/
+scratch/
+system_generated/
+.system_generated/
+*.bak
+*.tmp

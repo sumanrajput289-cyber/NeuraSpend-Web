@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraSpend - Dynamic Enterprise Dashboard</title>
+    <!-- Fonts Outfit & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Chart.js Offline Local Script reference -->
+    <script src="/static/js/chart.min.js"></script>
+    <script>
+        (function() {
+            var theme = localStorage.getItem('neuraspend_theme') || 'Dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            var style = document.createElement('style');
+            var bg = theme === 'Light' ? '#f2f2f7' : '#060609';
+            var color = theme === 'Light' ? '#2c2c2e' : '#ffffff';
+            style.innerHTML = 'body, .viewport { background-color: ' + bg + ' !important; color: ' + color + ' !important; }';
+            document.head.appendChild(style);
+        })();
+    </script>
+    <style>
+        /* Custom overrides to support dynamic enterprise layout */
+        body {
+            background-color: var(--bg-main) !important;
+            color: var(--fg-body) !important;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar) !important;
+            border-right: 1px solid var(--border-color) !important;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 30px 24px 20px 24px;
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #ffffff !important;
+        }
+
+        .brand-tag {
+            font-size: 9px;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .nav-btn {
+            color: rgba(255, 255, 255, 0.6) !important;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: #ffffff !important;
+        }
+
+        .nav-btn.active {
+            background-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+
+        .topbar {
+            background-color: var(--bg-sidebar) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            padding: 0 30px;
+        }
+
+        .topbar-bell-btn {
+            background: none;
+            border: none;
+            color: var(--fg-muted);
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .topbar-bell-btn:hover {
+            color: var(--fg-title);
+        }
+
+        .topbar-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            object-fit: cover;
+        }
+
+        /* 12 Metric Cards Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 105px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .metric-card.highlighted {
+            border-left: 3px solid var(--primary);
+        }
+
+        .metric-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 4px 0;
+        }
+
+        .metric-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+        }
+
+        /* Sovereign Layout */
+        .sovereign-workspace-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .spending-analytics-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .analytics-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toggle-capsule-row {
+            display: flex;
+            background-color: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .toggle-capsule-btn {
+            background: none;
+            border: none;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-capsule-btn.active {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .radial-health-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .radial-ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radial-ring-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .radial-ring-score {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .radial-score-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .radial-score-lbl {
+            font-size: 8px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* Activity Audits log list timeline */
+        .activity-feed-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+
+        .activity-feed-item:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+        }
+
+        .activity-icon {
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            background-color: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .activity-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex-grow: 1;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .activity-time {
+            font-size: 9px;
+            color: var(--fg-muted);
+        }
+
+        /* Achievements Badges Visual Collection Grid */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .badge-card {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            transition: var(--transition);
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+
+        .badge-card.unlocked {
+            opacity: 1;
+            filter: grayscale(0);
+            border-color: rgba(48, 209, 88, 0.2);
+            background: linear-gradient(135deg, rgba(255,255,255,0.02) 60%, rgba(48,209,88,0.02));
+        }
+
+        .badge-icon {
+            font-size: 28px;
+        }
+
+        .badge-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .badge-desc {
+            font-size: 10px;
+            color: var(--fg-muted);
+        }
+
+        /* Calendar grid */
+        .calendar-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--fg-muted);
+            margin-bottom: 12px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day-cell {
+            min-height: 80px;
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .calendar-day-cell:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+        }
+
+        .calendar-day-num {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--fg-muted);
+        }
+
+        .calendar-day-cell.today .calendar-day-num {
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .calendar-day-spend {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 10px;
+            color: var(--danger);
+            text-align: right;
+        }
+
+        .calendar-day-cell.empty {
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        /* Floating AI bubble chatbot */
+        .ai-assistant-bubble {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #b2c0ff 0%, #d1b2ff 100%);
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(178, 192, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .ai-assistant-bubble:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(178, 192, 255, 0.55);
+        }
+
+        /* Dropzone OCR Receipt Scanner styles */
+        .ocr-dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .ocr-dropzone:hover {
+            border-color: var(--primary);
+            background-color: rgba(10, 132, 255, 0.02);
+        }
+
+        .ocr-dropzone-icon {
+            font-size: 32px;
+        }
+
+        .ocr-preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom User Dropdown styling */
+        .user-dropdown-menu {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: top right;
+        }
+        .user-dropdown-menu.hide {
+            display: none !important;
+        }
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+        
+        /* Floating Chatbot widget styling */
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .chat-widget-container.show {
+            opacity: 1 !important;
+            transform: scale(1) !important;
+            pointer-events: auto !important;
+        }
+        .chat-widget-container.hide {
+            opacity: 0 !important;
+            transform: scale(0.9) !important;
+            pointer-events: none !important;
+        }
+        
+        /* Help Center Tabs styling */
+        .help-tab-content {
+            display: none !important;
+        }
+        .help-tab-content.active {
+            display: block !important;
+        }
+        .active-help-tab {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body class="dashboard-body" data-theme="Dark">
+    <!-- NOTIFICATIONS BELL DROPDOWN -->
+    <div id="notificationDropdown" class="notification-dropdown hide">
+        <div class="notification-header">
+            <h4 style="font-size: 12px; font-weight: 700; margin: 0;">System Notifications</h4>
+            <button id="btnMarkAllRead" style="background:none; border:none; color:var(--primary); font-size:10px; font-weight:600; cursor:pointer;">Mark All Read</button>
+        </div>
+        <div id="notificationList" class="notification-list">
+            <!-- Populated dynamically -->
+            <div style="padding: 20px; text-align: center; color: var(--fg-muted); font-size: 11px;">No unread alerts present.</div>
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHAT BOT BUBBLE -->
+    <div class="ai-assistant-bubble" title="Ask Chitragupta AI Assistant" onclick="toggleChitraguptaWidget(); event.stopPropagation();" id="btnFloatingChatBubble">
+        <span style="font-size: 20px;">🤖</span>
+    </div>
+
+    <!-- CHITRAGUPTA FLOATING GLASSMOGRAPHIC CHAT WIDGET -->
+    <div id="chitraguptaChatWidget" class="chat-widget-container hide" style="position: fixed; bottom: 85px; right: 25px; width: 350px; height: 460px; background: rgba(30, 30, 30, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); z-index: 1001; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform: scale(0.9); transform-origin: bottom right; opacity: 0; pointer-events: none;">
+        <!-- Chat Widget Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0,0,0,0.2); border-top-left-radius: 16px; border-top-right-radius: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="position: relative; width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary) 0%, #0a84ff 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">🤖
+                    <span style="position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; background: #30d158; border-radius: 50%; border: 1.5px solid #1e1e1e;"></span>
+                </div>
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: #ffffff; margin: 0;">Chitragupta AI</h3>
+                    <span style="font-size: 8px; color: #30d158; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Intelligent Assistant</span>
+                </div>
+            </div>
+            <button type="button" onclick="toggleChitraguptaWidget()" style="background: none; border: none; color: var(--fg-muted); font-size: 16px; cursor: pointer;">✕</button>
+        </div>
+        
+        <!-- Chat Messages Container -->
+        <div id="chatWidgetMessages" style="flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; max-height: 350px;">
+            <!-- Welcome message from Chitragupta -->
+            <div style="align-self: flex-start; max-width: 80%; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; border-top-left-radius: 2px; padding: 10px 14px; font-size: 12px; line-height: 1.4; color: #ffffff;">
+                Namaste. I am Chitragupta, your intelligent assistant. How may I assist you today?
+            </div>
+        </div>
+        
+        <!-- Chat Loading Animation Bouncing Dots -->
+        <div id="chatWidgetLoading" class="hide" style="padding: 0 16px 8px 16px; display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--fg-muted);">
+            <span>Chitragupta is thinking</span>
+            <div class="bouncing-dots" style="display: flex; gap: 3px;">
+                <span class="dot" style="width: 4px; height: 4px; background: var(--fg-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both;"></span>
+                <span class="dot" style="width: 4px; height: 4px; background: var(--fg-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; animation-delay: 0.2s;"></span>
+                <span class="dot" style="width: 4px; height: 4px; background: var(--fg-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; animation-delay: 0.4s;"></span>
+            </div>
+        </div>
+        
+        <!-- Chat Form Input -->
+        <form id="chatWidgetForm" autocomplete="off" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0,0,0,0.1); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+            <input type="text" id="chatWidgetInputText" placeholder="Ask budget, spendings, or targets..." style="flex-grow: 1; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #ffffff; font-size: 12px; outline: none; font-family: 'Inter', sans-serif;">
+            <button type="submit" class="btn btn-primary" style="padding: 8px 14px; font-size: 12px; border-radius: 8px; margin: 0; min-width: auto; cursor: pointer;">Send</button>
+        </form>
+    </div>
+
+    <div class="app-layout">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2 class="brand-title">NeuraSpend</h2>
+                <span class="brand-tag">Enterprise Finance</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-target="dashboard-panel"><span>📊</span> Dashboard</button>
+                <button class="nav-btn" data-target="add-expense-panel"><span>✍️</span> Add Expense</button>
+                <button class="nav-btn" data-target="transactions-panel"><span>🗂</span> Transactions</button>
+                <button class="nav-btn" data-target="budget-panel"><span>🎯</span> Budget Center</button>
+                <button class="nav-btn" data-target="goals-panel"><span>🏆</span> Goals</button>
+                <button class="nav-btn" data-target="rewards-panel"><span>✨</span> Savings Rewards</button>
+                <button class="nav-btn" data-target="analytics-panel"><span>📈</span> Analytics</button>
+                <button class="nav-btn" data-target="reports-panel"><span>📄</span> Reports</button>
+                <button class="nav-btn" data-target="voice-panel"><span>🎙️</span> Chitragupta AI Assistant</button>
+                <button class="nav-btn" data-target="ocr-panel"><span>📷</span> OCR Scanner</button>
+                <button class="nav-btn" data-target="calendar-panel"><span>📅</span> Calendar Center</button>
+                <button class="nav-btn" data-target="prediction-panel"><span>🔮</span> Prediction Center</button>
+                <button class="nav-btn" data-target="backup-panel"><span>⚙️</span> Backup Manager</button>
+                <button class="nav-btn" data-target="profile-panel"><span>👤</span> Profile Settings</button>
+                <button id="adminNavBtn" class="nav-btn hide" data-target="admin-panel"><span>🛡️</span> Admin Console</button>
+            </nav>
+            
+            <div class="sidebar-footer" style="flex-grow: 1; display:flex; flex-direction:column; justify-content:flex-end; padding: 20px 12px 10px 12px;">
+                <div style="display:flex; flex-direction:column; gap: 4px;">
+                    <button class="nav-btn" data-target="help-panel" style="margin-bottom:0; padding:8px 16px; font-size:11px;"><span>❓</span> Help Center</button>
+                    <button id="logoutBtn" class="logout-btn" style="padding:8px 16px; font-size:11px;">➔ Sign Out</button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- MAIN WORKSPACE -->
+        <main class="main-content">
+            <!-- TOP BAR -->
+            <header class="topbar">
+                <!-- Topbar Left: Budget banner warning indicator badge -->
+                <div class="topbar-left">
+                    <div id="budgetBanner" class="budget-banner bg-success">
+                        <span id="budgetBannerText" class="budget-text">✓ Healthy: Loading budget status...</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right" style="display: flex; align-items: center; gap: 24px;">
+                    <!-- Notifications Icon -->
+                    <button id="btnBellNotification" class="topbar-bell-btn">
+                        🔔
+                        <span id="bellBadgeCount" class="bell-badge hide">0</span>
+                    </button>
+
+                    <!-- Microphone Voice input tool link -->
+                    <button class="topbar-bell-btn" title="Ask Chitragupta AI Assistant" onclick="switchTab('voice-panel')">🎤</button>
+
+                    <!-- Receipt sheets checklist icon -->
+                    <button class="topbar-bell-btn" title="Scanner ledger" onclick="switchTab('ocr-panel')">📋</button>
+                    
+                    <!-- Theme Toggle Switch -->
+                    <button id="btnThemeToggle" class="topbar-bell-btn" title="Switch Theme">🌓</button>
+
+                    <!-- User Photo Circle Trigger & Dropdown -->
+                    <div class="topbar-user-menu" style="position: relative; display: flex; align-items: center; gap: 10px; cursor: pointer;" id="topbarUserDropdownTrigger">
+                        <img id="topbarAvatarImg" src="/static/assets/default_avatar.svg" class="topbar-avatar" alt="Avatar">
+                        <div style="text-align: left;">
+                            <h4 id="topbarGreetingText" style="font-size: 11px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 4px;">Hello <span style="font-size: 8px;">▼</span></h4>
+                            <span id="sessionUser" style="font-size: 8px; color: var(--fg-muted);">Admin</span>
+                        </div>
+                        
+                        <!-- SLEEK GLASSMORPHIC USER PROFILE DROPDOWN MENU -->
+                        <div id="topbarUserDropdownMenu" class="user-dropdown-menu hide" style="position: absolute; top: 45px; right: 0; background: rgba(30, 30, 30, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); width: 180px; z-index: 1000; padding: 6px 0;">
+                            <a href="#" onclick="switchTab('profile-panel'); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #ffffff; font-size: 12px; text-decoration: none; transition: background 0.2s;" class="dropdown-item">👤 Profile Settings</a>
+                            <a href="#" onclick="switchTab('settings-panel'); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #ffffff; font-size: 12px; text-decoration: none; transition: background 0.2s;" class="dropdown-item">⚙️ System Settings</a>
+                            <a href="#" onclick="switchTab('help-panel'); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #ffffff; font-size: 12px; text-decoration: none; transition: background 0.2s;" class="dropdown-item">❓ Help Center</a>
+                            <a href="#" id="adminConsoleDropdownBtn" onclick="switchTab('admin-panel'); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #ffffff; font-size: 12px; text-decoration: none; transition: background 0.2s;" class="dropdown-item hide">🛡️ Admin Console</a>
+                            <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 6px 0;"></div>
+                            <a href="#" id="dropdownLogoutBtn" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #ff453a; font-size: 12px; text-decoration: none; transition: background 0.2s;" class="dropdown-item">➔ Sign Out</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- VIEWPORT CONTAINER -->
+            <div class="viewport" style="background-color: var(--bg-main) !important; padding: 25px 30px;">
+                
+                <!-- 1. DASHBOARD OVERVIEW PANEL -->
+                <section id="dashboard-panel" class="panel-section active">
+                    
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner-card" style="background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="background: linear-gradient(135deg, var(--primary) 0%, #0a84ff 100%); border-radius: 50%; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(10,132,255,0.4);">
+                                <span style="font-size: 28px;">👋</span>
+                            </div>
+                            <div>
+                                <h2 style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 4px 0;">Welcome Back, <span id="welcomeUserName">Suman Singh</span></h2>
+                                <p id="welcomeMotivationalMsg" style="font-size: 13px; color: #30d158; margin: 0; font-weight: 500;">✓ Great job managing expenses. You are within budget this month.</p>
+                                <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; display: flex; gap: 15px; margin-bottom: 0;">
+                                    <span>📅 <span id="welcomeCurrentDate">23 May 2026</span></span>
+                                    <span>⏰ <span id="welcomeCurrentTime">20:24</span></span>
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: right; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 24px;">
+                            <div>
+                                <span style="font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.5px;">Monthly Budget</span>
+                                <h4 id="welcomeTotalBudget" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #ffffff; margin: 2px 0 0 0;">₹20,000.00</h4>
+                            </div>
+                            <div>
+                                <span style="font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.5px;">Current Spend</span>
+                                <h4 id="welcomeCurrentSpend" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #ff453a; margin: 2px 0 0 0;">₹12,300.00</h4>
+                            </div>
+                            <div>
+                                <span style="font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.5px;">Savings Amount</span>
+                                <h4 id="welcomeSavingsAmount" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #30d158; margin: 2px 0 0 0;">₹7,700.00</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Panel -->
+                    <div class="quick-action-bar" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                        <span style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 1px;">Quick Actions</span>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button onclick="switchTab('add-expense-panel')" class="quick-action-btn" style="background: rgba(10,132,255,0.1); border: 1px solid rgba(10,132,255,0.25); color: #0a84ff; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>➕</span> Add Expense
+                            </button>
+                            <button onclick="switchTab('goals-panel')" class="quick-action-btn" style="background: rgba(48,209,88,0.1); border: 1px solid rgba(48,209,88,0.25); color: #30d158; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>🎯</span> Add Goal
+                            </button>
+                            <button onclick="switchTab('reports-panel')" class="quick-action-btn" style="background: rgba(255,159,10,0.1); border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>📄</span> Generate Report
+                            </button>
+                            <button onclick="switchTab('voice-panel')" class="quick-action-btn" style="background: rgba(191,90,242,0.1); border: 1px solid rgba(191,90,242,0.25); color: #bf5af2; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>🎤</span> Chitragupta AI Assistant
+                            </button>
+                            <button onclick="switchTab('backup-panel')" class="quick-action-btn" style="background: rgba(94,92,230,0.1); border: 1px solid rgba(94,92,230,0.25); color: #5e5ce6; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>💾</span> Backup Data
+                            </button>
+                            <button onclick="switchTab('analytics-panel')" class="quick-action-btn" style="background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.25); color: #ff453a; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                <span>📊</span> View Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 12 Dynamic Metrics Grid -->
+                    <div class="metrics-grid">
+                        <!-- Card 1: Total Expenses -->
+                        <div class="metric-card">
+                            <span class="metric-title">Total Expenses</span>
+                            <h3 id="statTotalAll" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">All-time outflow</span>
+                        </div>
+
+                        <!-- Card 2: Monthly Spending -->
+                        <div class="metric-card">
+                            <span class="metric-title">Monthly Spending</span>
+                            <h3 id="statTotalMonth" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Outflow logged this month</span>
+                        </div>
+
+                        <!-- Card 3: Today's Spending -->
+                        <div class="metric-card">
+                            <span class="metric-title">Today's Spending</span>
+                            <h3 id="statTotalToday" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Spends logged today</span>
+                        </div>
+
+                        <!-- Card 4: Highest Expense -->
+                        <div class="metric-card">
+                            <span class="metric-title">Highest Expense</span>
+                            <h3 id="statMaxExpense" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Peak outflow entry</span>
+                        </div>
+
+                        <!-- Card 5: Average Expense -->
+                        <div class="metric-card">
+                            <span class="metric-title">Average Expense</span>
+                            <h3 id="statAvgExpense" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Mathematical average cost</span>
+                        </div>
+
+                        <!-- Card 6: Budget Remaining -->
+                        <div class="metric-card">
+                            <span class="metric-title">Budget Remaining</span>
+                            <h3 id="statRemainingBudget" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Safe buffer limit left</span>
+                        </div>
+
+                        <!-- Card 7: Health Score -->
+                        <div class="metric-card highlighted">
+                            <span class="metric-title">Health Score</span>
+                            <h3 id="statHealthScore" class="metric-value">0</h3>
+                            <span class="metric-desc">Dynamic financial rating</span>
+                        </div>
+
+                        <!-- Card 8: Reward Wallet -->
+                        <div class="metric-card">
+                            <span class="metric-title">Reward Wallet</span>
+                            <h3 id="statRewardWallet" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Simulated cash rewards</span>
+                        </div>
+
+                        <!-- Card 9: Savings Balance -->
+                        <div class="metric-card">
+                            <span class="metric-title">Savings Balance</span>
+                            <h3 id="statSavingsBalance" class="metric-value">₹0.00</h3>
+                            <span class="metric-desc">Aggregation of savings</span>
+                        </div>
+
+                        <!-- Card 10: Goals Completed -->
+                        <div class="metric-card">
+                            <span class="metric-title">Goals Completed</span>
+                            <h3 id="statGoalsCompleted" class="metric-value">0</h3>
+                            <span class="metric-desc">Fully saved target count</span>
+                        </div>
+
+                        <!-- Card 11: Active Goals -->
+                        <div class="metric-card">
+                            <span class="metric-title">Active Goals</span>
+                            <h3 id="statActiveGoals" class="metric-value">0</h3>
+                            <span class="metric-desc">Targets in progress count</span>
+                        </div>
+
+                        <!-- Card 12: Transaction Count -->
+                        <div class="metric-card">
+                            <span class="metric-title">Transaction Count</span>
+                            <h3 id="statTransactionCount" class="metric-value">0</h3>
+                            <span class="metric-desc">Ledger size recorded</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Mid Section: Spending Analytics Area Chart & Financial Health Dial -->
+                    <div class="sovereign-workspace-grid">
+                        
+                        <!-- Left: Spending Analytics Area Chart -->
+                        <div class="spending-analytics-card">
+                            <div class="analytics-header-row">
+                                <div>
+                                    <h4 style="font-family:'Outfit', sans-serif; font-size:14px; font-weight:800; color:#ffffff; margin-bottom: 2px;">Spending Analytics</h4>
+                                    <span style="font-size:10px; color:rgba(255,255,255,0.45);">Daily outflow tracking and moving average</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <div class="toggle-capsule-row" id="chartTypeToggleRow" style="margin-right: 5px;">
+                                        <button type="button" class="toggle-capsule-btn active" id="btnChartTypeLine" style="padding: 4px 10px; font-size: 10px;">Line</button>
+                                        <button type="button" class="toggle-capsule-btn" id="btnChartTypeBar" style="padding: 4px 10px; font-size: 10px;">Bar</button>
+                                    </div>
+                                    <div class="toggle-capsule-row">
+                                        <button type="button" class="toggle-capsule-btn">1D</button>
+                                        <button type="button" class="toggle-capsule-btn active">1M</button>
+                                        <button type="button" class="toggle-capsule-btn">1Y</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Neon Bezier Outflow Trend chart -->
+                            <div style="height: 220px; position:relative; margin-top: 10px;">
+                                <canvas id="chartMiniArea"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right: Radial Financial Health Ring & Score Needle -->
+                        <div class="radial-health-card">
+                            <h4 style="font-family:'Outfit', sans-serif; font-size:13px; font-weight:800; color:#ffffff; margin-bottom: 5px;">Financial Health</h4>
+                            <div class="radial-ring-container">
+                                <svg class="radial-ring-svg" viewBox="0 0 100 100">
+                                    <!-- Background track -->
+                                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="8"/>
+                                    <!-- Neon progress circle -->
+                                    <circle cx="50" cy="50" r="42" fill="none" stroke="url(#healthRingGradient)" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="40" stroke-linecap="round"/>
+                                    <defs>
+                                        <linearGradient id="healthRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#30d158" />
+                                            <stop offset="100%" stop-color="#0a84ff" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                
+                                <!-- needle pointer -->
+                                <div id="healthGaugeNeedle" style="position: absolute; width: 2px; height: 42px; background: #0a84ff; transform-origin: bottom center; bottom: 50%; left: calc(50% - 1px); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 8px rgba(10,132,255,0.8);"></div>
+                                
+                                <div class="radial-ring-score">
+                                    <span id="gaugeScoreValue" class="radial-score-num">0</span>
+                                    <span id="gaugeRatingText" class="radial-score-lbl">Loading</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: #30d158; letter-spacing: 1px;">Top-tier Saver Status</span>
+                            
+                            <!-- Financial Health Score Explanation Panel -->
+                            <div class="health-explanation-panel" style="width: 100%; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 10px; padding-top: 15px; text-align: left;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500;">Budget Management</span>
+                                    <span style="font-size: 11px; color: #30d158; font-weight: 700;">Excellent</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500;">Savings Discipline</span>
+                                    <span style="font-size: 11px; color: #30d158; font-weight: 700;">Good</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500;">Goal Progress</span>
+                                    <span style="font-size: 11px; color: #0a84ff; font-weight: 700;">Good</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500;">Spending Stability</span>
+                                    <span style="font-size: 11px; color: #30d158; font-weight: 700;">Excellent</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Bottom Section: Carousel recommendations & ledger timeline -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px;">
+                        
+                        <!-- Left: Rotating Intelligence Recommendations -->
+                        <div class="card card-padding" style="display: flex; flex-direction: column; gap: 15px;">
+                            <h4 style="font-family:'Outfit', sans-serif; font-size:14px; font-weight:800; color:#ffffff; margin-bottom: 5px;">AI Advisor Feed</h4>
+                            <div class="instructions-box" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; min-height: 100px; margin: 0; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 20px;">
+                                <div id="carouselTrack" style="font-size: 12px; line-height: 1.6; color: var(--fg-body); transition: opacity 0.3s ease; text-align: center;">
+                                    Loading AI analytical insights...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Chronological Activity Timeline Feed -->
+                        <div class="card card-padding" style="display: flex; flex-direction: column; gap: 15px;">
+                            <h4 style="font-family:'Outfit', sans-serif; font-size:14px; font-weight:800; color:#ffffff; margin-bottom: 5px;">Recent Audit Activity Log</h4>
+                            <div id="activityFeedList" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Dynamically loaded via app.js -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+                
+                <!-- 2. ADD EXPENSE PANEL -->
+                <section id="add-expense-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Add New Expenditure Entry</h2>
+                    </div>
+                    
+                    <div class="dual-column-layout">
+                        <!-- Form Column -->
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <form id="addExpenseForm" autocomplete="off">
+                                    <div class="form-group-block">
+                                        <label for="expTitle">Transaction Title</label>
+                                        <input type="text" id="expTitle" required placeholder="e.g. Office Dinner">
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="expDescription">Description Details</label>
+                                        <input type="text" id="expDescription" placeholder="Optional comments...">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="expAmount">Amount Outflow</label>
+                                            <input type="number" id="expAmount" step="0.01" min="0.01" required placeholder="0.00">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="expDate">Calendar Date</label>
+                                            <input type="date" id="expDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="expCategory">Category Channel</label>
+                                            <select id="expCategory">
+                                                <option value="Food & Dining">Food & Dining</option>
+                                                <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                                                <option value="Travel & Transport">Travel & Transport</option>
+                                                <option value="Entertainment">Entertainment</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="expPaymentMethod">Payment Instrument</label>
+                                            <select id="expPaymentMethod">
+                                                <option value="UPI">UPI</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Debit Card">Debit Card</option>
+                                                <option value="Credit Card">Credit Card</option>
+                                                <option value="Bank Transfer">Bank Transfer</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group-block">
+                                        <label>ATTACH RECEIPT BILL (OPTIONAL)</label>
+                                        <input type="file" id="expAttachment" accept="image/*">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-block margin-top">
+                                        ✓ COMMIT TRANSACTION
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- NLP Parsing Column -->
+                        <div class="nlp-column">
+                            <div class="card card-padding">
+                                <h3>Deterministic Text Parser Assistant</h3>
+                                <p class="muted-text">Type or paste a raw conversational sentence about your spending habits, and our local parsing algorithm will isolate variables automatically.</p>
+                                <div class="instructions-box">
+                                    <strong>Examples:</strong>
+                                    <ul>
+                                        <li>"Spent 450 on dinner"</li>
+                                        <li>"Purchased keyboard for 1500"</li>
+                                        <li>"Uber taxi fare 300"</li>
+                                    </ul>
+                                </div>
+                                
+                                <textarea id="nlpInputText" rows="5" placeholder="Type transaction text here..."></textarea>
+                                <button type="button" id="nlpParseBtn" class="btn btn-secondary btn-block">
+                                    🔍 Parse Transaction Text
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 3. TRANSACTIONS LEDGER PANEL -->
+                <section id="transactions-panel" class="panel-section">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="panel-title">Transaction Ledger Database</h2>
+                        <div style="display:flex; gap:10px;">
+                            <button id="btnBulkDelete" class="btn btn-danger" style="padding: 8px 16px; font-size:11px;" disabled>Bulk Delete Selection</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Search, Sort, Filters -->
+                    <div class="ledger-filter-card" style="display:flex; flex-direction:column; gap:15px;">
+                        <div class="search-wrapper">
+                            <label for="ledgerSearch">🔍 SEARCH LEDGER: </label>
+                            <input type="text" id="ledgerSearch" placeholder="Filter by Title, Merchant, or Description...">
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;">
+                            <div>
+                                <label for="filterCategory" style="font-size:8px;">Category</label>
+                                <select id="filterCategory">
+                                    <option value="All">All Categories</option>
+                                    <option value="Food & Dining">Food & Dining</option>
+                                    <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                                    <option value="Travel & Transport">Travel & Transport</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filterPayment" style="font-size:8px;">Payment Method</label>
+                                <select id="filterPayment">
+                                    <option value="All">All Instruments</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Debit Card">Debit Card</option>
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filterStartDate" style="font-size:8px;">Start Date</label>
+                                <input type="date" id="filterStartDate">
+                            </div>
+                            <div>
+                                <label for="filterEndDate" style="font-size:8px;">End Date</label>
+                                <input type="date" id="filterEndDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CSV Bulk selector template dropzone -->
+                    <div class="card card-padding margin-bottom" style="display:flex; justify-content:space-between; align-items:center; padding:15px 25px;">
+                        <div style="font-size:12px;">
+                            🚀 <strong>Bulk CSV Upload:</strong> Need to import massive transactions? Select your prepared worksheet.
+                        </div>
+                        <form id="bulkCsvForm" style="display:flex; gap:10px; align-items:center;">
+                            <input type="file" id="bulkCsvFile" accept=".csv" required style="font-size:11px; width:220px;">
+                            <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; font-size:10px;">Import CSV</button>
+                        </form>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllLedger"></th>
+                                    <th style="width: 80px;">ID</th>
+                                    <th>Date</th>
+                                    <th>Title Description</th>
+                                    <th>Category</th>
+                                    <th>Payment Instrument</th>
+                                    <th style="text-align: right;">Amount</th>
+                                    <th style="width: 180px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerTableBody">
+                                <!-- Loaded dynamically via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. BUDGET CENTER PANEL -->
+                <section id="budget-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Active Budget Limit Allocation</h2>
+                    </div>
+                    
+                    <div class="dual-column-layout">
+                        <!-- Left form -->
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <h3>Modify Monthly Limits</h3>
+                                <form id="budgetSettingForm" autocomplete="off" style="margin-top:15px;">
+                                    <div class="form-group-block">
+                                        <label for="budgetTargetLimit">Monthly Budget Limit (₹)</label>
+                                        <input type="number" id="budgetTargetLimit" step="10" required>
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="budgetWarningLimit">Warning Alert Limit (₹)</label>
+                                        <input type="number" id="budgetWarningLimit" step="10" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block margin-top">✓ Adjust Allocations</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Right visual progress levels -->
+                        <div class="nlp-column">
+                            <div class="card card-padding">
+                                <h3>Budget Threshold Rules</h3>
+                                <div class="instructions-box" style="margin-top:15px;">
+                                    <ul>
+                                        <li>🟢 <strong>Below 80% Utilization:</strong> Healthy buffer limits active. Unlocks simulated rewards points credits multipliers.</li>
+                                        <li>🟡 <strong>Above 80% Utilization:</strong> Warning alert triggered. Notification center flags warnings.</li>
+                                        <li>🔴 <strong>Threshold Exceeded:</strong> Over-budget lock is enabled. Immediate reallocation audit recommended.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 5. ANALYTICS PANEL -->
+                <section id="analytics-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Advanced Financial Analytics Dashboard</h2>
+                    </div>
+                    
+                    <div class="charts-grid-large">
+                        <div class="chart-large-card">
+                            <h3>Category Distribution Doughnut</h3>
+                            <div class="chart-wrapper-large">
+                                <canvas id="chartLargePie"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-large-card">
+                            <h3>Monthly Trend Comparisons</h3>
+                            <div class="chart-wrapper-large">
+                                <canvas id="chartLargeBar"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-large-card">
+                            <h3>Daily Outflow Streams</h3>
+                            <div class="chart-wrapper-large">
+                                <canvas id="chartLargeLine"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-large-card">
+                            <h3>Top Spending Channels</h3>
+                            <div class="chart-wrapper-large">
+                                <canvas id="chartLargeHBar"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-large-card span-2">
+                            <h3>Cumulative Spending Growth Area</h3>
+                            <div class="chart-wrapper-large">
+                                <canvas id="chartLargeArea"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 6. REPORTS CENTER PANEL -->
+                <section id="reports-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Enterprise Report Compilation Center</h2>
+                    </div>
+                    
+                    <div class="card card-padding center-content">
+                        <h3>Generate Multi-Format Analytical Executive Worksheets</h3>
+                        <p class="muted-text margin-bottom">Generate high-fidelity summaries or formal academic PDFs directly in your local exports directory.</p>
+                        
+                        <div class="reports-buttons-grid">
+                            <button id="btnExportPDF" class="btn btn-primary btn-large">📄 Compile Full PDF Suite</button>
+                            <button id="btnExportSummary" class="btn btn-secondary btn-large">📑 Monthly PDF Summary</button>
+                            <button id="btnExportExcel" class="btn btn-secondary btn-large">📈 Styled Excel Sheet</button>
+                        </div>
+                        
+                        <div id="reportsMessage" class="reports-status-msg margin-top"></div>
+                    </div>
+                </section>
+
+                <!-- 7. GOALS SAVINGS PANEL -->
+                <section id="goals-panel" class="panel-section">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="panel-title">Savings Goals Target Center</h2>
+                        <button id="btnOpenGoalModal" class="btn btn-primary" style="padding:8px 16px; font-size:11px;">+ New Savings Goal</button>
+                    </div>
+
+                    <!-- Goals visualizer list grids -->
+                    <div id="goalsCardsGrid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px;">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </section>
+
+                <!-- 8. SAVINGS REWARDS WALLET PANEL -->
+                <section id="rewards-panel" class="panel-section">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="panel-title">Gamified Savings Reward Program</h2>
+                        <div style="display:flex; gap:10px;">
+                            <select id="rewardSimMonth" style="width:160px; font-size:12px; padding:6px 10px;">
+                                <option value="2026-05">May 2026</option>
+                                <option value="2026-04">April 2026</option>
+                                <option value="2026-03">March 2026</option>
+                            </select>
+                            <button id="btnClaimRewardSim" class="btn btn-primary" style="padding: 6px 14px; font-size:11px;">Claim 2% Savings Reward</button>
+                        </div>
+                    </div>
+
+                    <!-- Wallet display balances -->
+                    <div class="stats-grid" style="grid-template-columns: 1.5fr 1fr; margin-bottom: 25px;">
+                        <div class="kpi-card" style="justify-content: center; background: linear-gradient(135deg, var(--bg-card) 60%, rgba(48,209,88,0.05)); border-color: rgba(48,209,88,0.25);">
+                            <span class="kpi-title" style="color:#30d158; font-weight:800;">SIMULATED REWARD WALLET BALANCE</span>
+                            <h2 id="rewardsTotalWallet" style="font-size:38px; color:#00e676; font-weight:800; margin:10px 0;">₹0.00</h2>
+                            <div style="font-size:12px; color:var(--fg-muted);">
+                                Status level: <strong id="rewardsSaverLevelText" style="color:var(--warning);">Bronze Saver</strong> (Earn more to unlock Diamond tier!)
+                            </div>
+                        </div>
+                        <div class="kpi-card" style="justify-content: center;">
+                            <span class="kpi-title">NEXT REWARD ELIGIBILITY CALCULATION</span>
+                            <h3 style="font-size: 20px; font-weight: 700; margin: 8px 0;">End of Month</h3>
+                            <span class="kpi-desc">Based on actual remaining budget balance logs.</span>
+                        </div>
+                    </div>
+
+                    <!-- Achievement Badges collection panel -->
+                    <div class="card card-padding">
+                        <h3 style="margin-bottom:5px;">Your Milestone Achievement Badges Collection</h3>
+                        <p class="muted-text" style="font-size:12px;">Accumulate rewards, budget properly, and complete active savings goals to unlock all badges!</p>
+                        
+                        <div id="achievementsBadgesGrid" class="badges-grid">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 9. VOICE ENTRY PANEL -->
+                <section id="voice-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Chitragupta AI Assistant</h2>
+                    </div>
+                    
+                    <!-- Chitragupta Welcome Bubble Greeting Card -->
+                    <div class="card card-padding" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px; text-align: center; border-radius: var(--border-radius);">
+                        <div style="font-size: 40px; margin-bottom: 10px;">🤖</div>
+                        <h3 style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--fg-title); margin-bottom: 8px;">Chitragupta</h3>
+                        <p style="font-size: 14px; color: var(--fg-body); margin: 0; line-height: 1.5; font-style: italic;">"Hello, I am Chitragupta, your intelligent assistant. How may I assist you today?"</p>
+                    </div>
+                    
+                    <div class="card card-padding center-content">
+                        <h3>Asynchronous Browser Microphone Parsing Engine</h3>
+                        <p class="muted-text margin-bottom">Click 'Start Microphone Listen' and describe your transaction (e.g., "Spent 450 rupees on dinner").</p>
+                        
+                        <button type="button" id="voiceMicBtn" class="voice-mic-btn">🎙</button>
+                        
+                        <div id="voiceStatus" class="voice-status-lbl">Microphone service idle.</div>
+                        <div id="voiceTranscribeResult" class="voice-result-box hidden"></div>
+                    </div>
+
+                    <div class="card card-padding margin-top">
+                        <h3>Interactive Text-Based Ledger Chat</h3>
+                        <p class="muted-text margin-bottom">Type your questions below to speak with Chitragupta about your platform accounts, budgets, or milestones.</p>
+                        
+                        <div id="fullChatMessages" style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 12px; height: 280px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
+                            <!-- Welcome -->
+                            <div style="align-self: flex-start; max-width: 80%; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; border-top-left-radius: 2px; padding: 10px 14px; font-size: 12px; line-height: 1.4; color: #ffffff;">
+                                Namaste. I am Chitragupta, your intelligent assistant. How may I assist you today?
+                            </div>
+                        </div>
+                        
+                        <form id="fullChatForm" autocomplete="off" style="display: flex; gap: 10px;">
+                            <input type="text" id="fullChatInputText" placeholder="Ask about budgets, spendings, or targets..." style="flex-grow: 1; padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #ffffff; font-size: 13px; outline: none; font-family: 'Inter', sans-serif;">
+                            <button type="submit" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px; border-radius: 8px; margin: 0; cursor: pointer;">Send Query</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 10. RECEIPT OCR SCANNER PANEL -->
+                <section id="ocr-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Optical Character Recognition Scanner</h2>
+                    </div>
+
+                    <div class="dual-column-layout">
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <h3>Scan Receipt Image</h3>
+                                <p class="muted-text margin-bottom">Drag and drop or select a transaction receipt image. Our Pillow + Tesseract engine will parse transaction merchant name and total amount.</p>
+                                
+                                <div id="ocrDropzone" class="ocr-dropzone">
+                                    <span class="ocr-dropzone-icon">📁</span>
+                                    <span>Drag & Drop Receipt Image Here or Click to Upload</span>
+                                    <input type="file" id="ocrInputFile" accept="image/*" class="hide">
+                                </div>
+                                <div id="ocrImagePreviewContainer" class="hide" style="text-align:center; margin-top:20px;">
+                                    <img id="ocrPreviewImg" src="" class="ocr-preview-img" alt="OCR Preview">
+                                    <button type="button" id="btnRunOcrScan" class="btn btn-primary btn-block margin-top">🔍 Start OCR Scan Analysis</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="nlp-column">
+                            <div class="card card-padding" id="ocrResultsCard" style="display:none;">
+                                <h3>OCR Extraction Results</h3>
+                                <div class="instructions-box" style="margin-top:10px;">
+                                    <ul id="ocrResultsList" style="display:flex; flex-direction:column; gap:8px;">
+                                        <!-- Loaded dynamically -->
+                                    </ul>
+                                </div>
+                                <button type="button" id="btnOcrAutofill" class="btn btn-primary btn-block">✓ Auto-Fill Expense Form</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 11. INTERACTIVE CALENDAR CENTER -->
+                <section id="calendar-panel" class="panel-section">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="panel-title">Interactive Financial Calendar</h2>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button id="btnPrevMonth" class="btn btn-secondary" style="padding: 4px 10px;">◀</button>
+                            <span id="calendarMonthLabel" style="font-family:var(--font-heading); font-weight:800; font-size:16px; width:130px; text-align:center;">May 2026</span>
+                            <button id="btnNextMonth" class="btn btn-secondary" style="padding: 4px 10px;">▶</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom month calendar visual grid -->
+                    <div class="card card-padding">
+                        <div class="calendar-header-row">
+                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                        </div>
+                        <div id="calendarDaysGrid" class="calendar-grid">
+                            <!-- Populated mathematically -->
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 12. PREDICTION CENTER PANEL -->
+                <section id="prediction-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Analytical Spending Insights & Forecasts</h2>
+                    </div>
+                    
+                    <div class="card card-padding">
+                        <div class="score-display-wrapper" style="text-align:center; padding: 20px 0; border-bottom:1px solid var(--border-color); margin-bottom:20px;">
+                            <h1 id="predictHealthScore" class="score-dial text-primary" style="font-size:62px; font-weight:800;">--</h1>
+                            <h4 id="predictHealthRating" class="score-rating" style="font-size:16px; font-weight:700;">Financial Health Score: Loading...</h4>
+                        </div>
+                        
+                        <div class="forecast-insights-list">
+                            <div class="insight-row">
+                                <strong>Average Monthly Outflow:</strong>
+                                <span id="predictAvgSpend">₹0.00</span>
+                            </div>
+                            <div class="insight-row">
+                                <strong>Forecast Next Month Outflow:</strong>
+                                <span id="predictNextMonth">₹0.00</span>
+                            </div>
+                            <div class="insight-row">
+                                <strong>Spending Trend Vector:</strong>
+                                <span id="predictTrend">Stable</span>
+                            </div>
+                            <div class="insight-row">
+                                <strong>Escalating Category Channel:</strong>
+                                <span id="predictGrowthCat">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 13. BACKUP & RESTORE PANEL -->
+                <section id="backup-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">System Backup & Recovery Coordinator</h2>
+                    </div>
+                    
+                    <div class="card card-padding margin-bottom split-row" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="desc-span">Generate instant, timestamped snapshots of your primary database, or restore from a previous recovery point.</span>
+                        <button type="button" id="btnCreateBackup" class="btn btn-primary">⚙ Compile Backup Snapshot</button>
+                    </div>
+                    
+                    <div class="card card-padding">
+                        <h4>Available Historical Database Snapshots</h4>
+                        <div class="table-container list-box">
+                            <table class="ledger-table min-table">
+                                <thead>
+                                    <tr>
+                                        <th>Backup Snapshot Filename</th>
+                                        <th style="width: 150px; text-align: center;">Recovery Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backupsListBody">
+                                    <!-- Loaded dynamically via AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 14. USER PROFILE MANAGEMENT PANEL -->
+                <section id="profile-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">My Enterprise User Profile</h2>
+                    </div>
+
+                    <div class="dual-column-layout">
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <form id="profileUpdateForm" autocomplete="off" enctype="multipart/form-data">
+                                    <div class="form-group-block">
+                                        <label for="profFullName">Full Name</label>
+                                        <input type="text" id="profFullName" name="full_name" required>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="profUsername">Username</label>
+                                            <input type="text" id="profUsername" readonly style="opacity:0.6;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profMobile">Mobile Number</label>
+                                            <input type="text" id="profMobile" name="mobile">
+                                        </div>
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="profEmail">Email Address</label>
+                                        <input type="text" id="profEmail" name="email" required>
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="profPassword">Update Password (Optional)</label>
+                                        <input type="password" id="profPassword" name="password" placeholder="Leave empty to keep unchanged">
+                                    </div>
+                                    <label>Upload Avatar Photo</label>
+                                    <div class="avatar-upload-group" style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                                        <img id="profAvatarPreview" src="/static/assets/default_avatar.svg" class="avatar-preview-circle" alt="Avatar">
+                                        <div style="display:flex; flex-direction:column; gap:8px;">
+                                            <div style="display:flex; gap:10px;">
+                                                <button type="button" id="btnProfUploadTrigger" class="avatar-file-btn">Choose Image</button>
+                                                <button type="button" id="btnProfRemoveAvatar" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">Remove Image</button>
+                                            </div>
+                                            <span style="font-size:10px; color:var(--fg-muted);">Allowed formats: PNG, JPG, JPEG, GIF, SVG. Max size: 2MB.</span>
+                                        </div>
+                                        <input type="hidden" id="removeAvatarFlag" name="remove_avatar" value="false">
+                                        <input type="file" id="profAvatar" name="profile_photo" accept="image/*" class="hide">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block margin-top">✓ Adjust Profile Settings</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="nlp-column">
+                            <!-- Visual User Profile Showcase Card -->
+                            <div class="card card-padding center-content" style="text-align: center; margin-bottom: 20px;">
+                                <div style="position: relative; display: inline-block; margin-bottom: 15px;">
+                                    <img id="profCardAvatar" src="/static/assets/default_avatar.svg" class="avatar-preview-circle" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover;" alt="Avatar">
+                                    <span style="position: absolute; bottom: 0; right: 0; background: var(--success); color: white; border-radius: 50%; padding: 4px 8px; font-size: 10px; font-weight: bold; border: 2px solid var(--bg-card);">ACTIVE</span>
+                                </div>
+                                <h3 id="profCardFullName" style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--fg-title); margin: 0 0 4px 0;">Suman Singh</h3>
+                                <span id="profCardRole" class="brand-tag" style="font-size: 10px; color: var(--primary); font-weight: 700; letter-spacing: 1px;">Administrator</span>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                                    <div>
+                                        <span style="font-size: 10px; text-transform: uppercase; color: var(--fg-muted); font-weight: 700;">Milestones</span>
+                                        <h4 id="profStatsBadges" style="font-size: 16px; font-weight: 800; margin: 4px 0 0 0;">0/5 Badges</h4>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 10px; text-transform: uppercase; color: var(--fg-muted); font-weight: 700;">Completed</span>
+                                        <h4 id="profStatsCompletedGoals" style="font-size: 16px; font-weight: 800; margin: 4px 0 0 0;">0 Goals</h4>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: left; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Username:</span>
+                                        <strong id="profCardUsername" style="color: var(--fg-title);">sumansingh</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Email:</span>
+                                        <strong id="profCardEmail" style="color: var(--fg-title);">sumansingh@neuraspend.com</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Role Scope:</span>
+                                        <strong id="profCardShowcaseRole" style="color: var(--primary); font-weight: 700;">Administrator</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Created:</span>
+                                        <strong id="profCardCreatedAt" style="color: var(--fg-title);">2026-05-20</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Last Login:</span>
+                                        <strong id="profCardLastLogin" style="color: var(--fg-title);">2026-05-24</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-padding">
+                                <h3>Account Security Details</h3>
+                                <div class="instructions-box" style="margin-top:15px;">
+                                    <ul style="display:flex; flex-direction:column; gap:8px;">
+                                        <li>🔐 Passwords hashed on disk using strong SHA-256 routines.</li>
+                                        <li>🔒 Local session variables locked down in memory cache.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 15B. ENTERPRISE HELP CENTER PANEL -->
+                <section id="help-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">NeuraSpend Enterprise Help Center</h2>
+                    </div>
+
+                    <!-- Search Input Block -->
+                    <div class="card card-padding" style="margin-bottom: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                            <span style="position: absolute; left: 15px; color: var(--fg-muted); font-size: 16px;">🔍</span>
+                            <input type="text" id="helpSearchInput" placeholder="Search FAQs, guides, and troubleshooting solutions..." style="width: 100%; padding: 12px 20px 12px 45px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 10px; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s;" onkeyup="filterHelpContent()">
+                        </div>
+                    </div>
+
+                    <!-- Help Tabs Controls -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <button id="btnHelpTabFAQ" class="btn btn-secondary active-help-tab" onclick="switchHelpTab('faq')" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s;">❓ FAQ & Troubleshooting</button>
+                        <button id="btnHelpTabGuides" class="btn btn-secondary" onclick="switchHelpTab('guides')" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s;">📖 Getting Started & Guides</button>
+                        <button id="btnHelpTabSupport" class="btn btn-secondary" onclick="switchHelpTab('support')" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s;">✉️ Contact Support Form</button>
+                    </div>
+
+                    <!-- Help Tabs Contents -->
+                    <div id="helpTabFAQContent" class="help-tab-content active">
+                        <div class="dual-column-layout">
+                            <!-- FAQ Left Column -->
+                            <div class="form-column">
+                                <div class="card card-padding">
+                                    <h3>Frequently Asked Questions</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Standard operating questions for the NeuraSpend Expense Manager platform.</p>
+                                    
+                                    <div style="display:flex; flex-direction:column; gap:12px;" class="help-searchable-container">
+                                        <!-- FAQ Item 1 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>📊 How do I set a monthly budget?</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Navigate to the **Budget Settings** section via the dashboard or user dropdown. Set your Monthly Budget Limit and Warning Limit, then click "Apply Global System Preferences". If your monthly spending exceeds the warning limit, a warning alert badge will trigger!
+                                            </p>
+                                        </details>
+
+                                        <!-- FAQ Item 2 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>🤖 How does Chitragupta AI work?</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Chitragupta is a highly contextual assistant powered by a Flask backend NLP parser. It automatically scans your database expense summaries, savings targets, and rewards tiers to provide real-time budget forecasting and audit summaries.
+                                            </p>
+                                        </details>
+
+                                        <!-- FAQ Item 3 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>📷 How do I scan receipt images?</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Head to the **OCR Scanner** tab from the sidebar. Drag and drop any transaction receipt image (PNG, JPG) and hit "Start OCR Scan". The engine will extract the merchant name and total amount automatically, allowing you to auto-fill the expense ledger in a single click!
+                                            </p>
+                                        </details>
+
+                                        <!-- FAQ Item 4 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>💎 How do I earn savings rewards?</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                NeuraSpend rewards consistent savers! If your monthly spend stays under your monthly budget limit, you earn direct 2% cashback points at the end of the month. Accrue rewards to unlock Gold, Platinum, and Diamond Saver levels!
+                                            </p>
+                                        </details>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ Right Column (Troubleshooting) -->
+                            <div class="nlp-column">
+                                <div class="card card-padding">
+                                    <h3>Troubleshooting Center</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Resolve typical system errors and browser microphone configuration issues.</p>
+                                    
+                                    <div style="display:flex; flex-direction:column; gap:12px;" class="help-searchable-container">
+                                        <!-- Trouble 1 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>🎙️ My browser mic is not transcribing voice input</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Check that browser microphone permissions are enabled for NeuraSpend. The system relies on Web Speech API standard libraries. If you are on an offline system, please make sure your network supports localized speech engines, or type questions into Chitragupta's chat input directly!
+                                            </p>
+                                        </details>
+
+                                        <!-- Trouble 2 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>📄 PDF financial statement report fails to compile</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Ensure your transaction database is not empty. If there are no expense records, the PDF rendering engine will throw empty bounds exceptions. Also verify your target directory path has valid folder write permission scopes.
+                                            </p>
+                                        </details>
+
+                                        <!-- Trouble 3 -->
+                                        <details class="help-details" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; cursor:pointer; color:var(--fg-body);">
+                                            <summary style="font-weight:700; font-family:var(--font-heading); font-size:12px; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                                <span>👤 Suman is not able to add profile picture?</span>
+                                                <span style="font-size:10px; color:var(--primary);">▼</span>
+                                            </summary>
+                                            <p style="font-size:11px; margin-top:8px; line-height:1.4; color:var(--fg-muted);" class="help-text">
+                                                Make sure your selected file is a valid image (PNG, JPG, JPEG, WEBP, GIF, SVG) and under 2MB. When uploading, click "Adjust Profile Settings" to submit. You will see a success confirmation dialog once saved!
+                                            </p>
+                                        </details>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="helpTabGuidesContent" class="help-tab-content">
+                        <div class="dual-column-layout">
+                            <!-- Guides Left Column -->
+                            <div class="form-column">
+                                <div class="card card-padding">
+                                    <h3>Getting Started Onboarding</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Follow these steps to master NeuraSpend on your first login.</p>
+                                    
+                                    <div style="display:flex; flex-direction:column; gap:15px;" class="help-searchable-container">
+                                        <div style="display:flex; gap:12px; align-items:flex-start;" class="help-details">
+                                            <div style="background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.2); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700; font-size:12px; flex-shrink:0;">1</div>
+                                            <div>
+                                                <h4 style="font-size:13px; font-weight:700; color:#ffffff; margin:0 0 4px 0;" class="help-text">Configure Budget Thresholds</h4>
+                                                <p style="font-size:11px; margin:0; line-height:1.4; color:var(--fg-muted);" class="help-text">Head over to the Budget Center. Initialize your monthly limit (default is ₹20,000) and set a warning threshold (default is ₹16,000). Applying preferences registers your monthly quotas instantly.</p>
+                                            </div>
+                                        </div>
+
+                                        <div style="display:flex; gap:12px; align-items:flex-start;" class="help-details">
+                                            <div style="background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.2); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700; font-size:12px; flex-shrink:0;">2</div>
+                                            <div>
+                                                <h4 style="font-size:13px; font-weight:700; color:#ffffff; margin:0 0 4px 0;" class="help-text">Record Expense Transactions</h4>
+                                                <p style="font-size:11px; margin:0; line-height:1.4; color:var(--fg-muted);" class="help-text">Log daily outflows via the add expense panel. You can either type transactions, scan raw physical receipts in the OCR tab, or dictate aloud using the Chitragupta AI microphone parsing service!</p>
+                                            </div>
+                                        </div>
+
+                                        <div style="display:flex; gap:12px; align-items:flex-start;" class="help-details">
+                                            <div style="background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.2); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700; font-size:12px; flex-shrink:0;">3</div>
+                                            <div>
+                                                <h4 style="font-size:13px; font-weight:700; color:#ffffff; margin:0 0 4px 0;" class="help-text">Track Savings Goals & Rewards</h4>
+                                                <p style="font-size:11px; margin:0; line-height:1.4; color:var(--fg-muted);" class="help-text">Create specialized savings targets (e.g. Vacation Fund, Emergency Fund). Credit savings at the end of the month to unlock simulated cashbacks and progress toward your saver milestones badges!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Guides Right Column -->
+                            <div class="nlp-column">
+                                <div class="card card-padding">
+                                    <h3>Advanced Platform Guides</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Read detailed reference material about platform features.</p>
+                                    
+                                    <div style="display:flex; flex-direction:column; gap:12px;" class="help-searchable-container">
+                                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:10px; padding:15px;" class="help-details">
+                                            <h4 style="font-size:13px; font-weight:700; color:#ffffff; margin:0 0 6px 0;" class="help-text">🛡️ SQL Injection & CSRF Defenses</h4>
+                                            <p style="font-size:11px; margin:0; line-height:1.4; color:var(--fg-muted);" class="help-text">NeuraSpend is built for enterprise security. Every SQLite query relies on parametrized queries to fully block SQL Injection. Every write request is intercepted by a centralized JS fetch filter to validate a unique UUID CSRF Token issued on load.</p>
+                                        </div>
+
+                                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:10px; padding:15px;" class="help-details">
+                                            <h4 style="font-size:13px; font-weight:700; color:#ffffff; margin:0 0 6px 0;" class="help-text">📁 Database Backups & Restorations</h4>
+                                            <p style="font-size:11px; margin:0; line-height:1.4; color:var(--fg-muted);" class="help-text">The Backup Manager allows hot-database backups. Click "Backup Database" to generate timestamped ZIP folders of the SQLite engine. You can restore prior states instantly via the administrative control terminal.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="helpTabSupportContent" class="help-tab-content">
+                        <div class="dual-column-layout">
+                            <!-- Support Contact Form Column -->
+                            <div class="form-column">
+                                <div class="card card-padding">
+                                    <h3>✉️ Open a Support Ticket</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Submit a query directly to the system administrator. Tickets will be written to the database and analyzed by the admin.</p>
+                                    
+                                    <form id="helpSupportForm" autocomplete="off">
+                                        <div class="form-group-block">
+                                            <label for="helpCategory">Support Query Category</label>
+                                            <select id="helpCategory" name="category" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #ffffff;">
+                                                <option value="General Query">General Query</option>
+                                                <option value="Technical Support">Technical Support</option>
+                                                <option value="Budget Configuration">Budget Configuration</option>
+                                                <option value="System Bug">System Bug</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group-block">
+                                            <label for="helpSubject">Subject Title</label>
+                                            <input type="text" id="helpSubject" name="subject" required placeholder="e.g. My receipt image is failing to upload" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #ffffff;">
+                                        </div>
+                                        <div class="form-group-block">
+                                            <label for="helpMessage">Message Detail Description</label>
+                                            <textarea id="helpMessage" name="message" required rows="5" placeholder="Provide complete details about your inquiry..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #ffffff; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-block margin-top">✓ Submit Support Ticket</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Support Status Info Column -->
+                            <div class="nlp-column">
+                                <div class="card card-padding">
+                                    <h3>Your Support Inquiries</h3>
+                                    <p class="muted-text" style="font-size: 11px; margin-bottom: 15px;">Monitor tickets submitted by your profile account.</p>
+                                    
+                                    <div style="max-height: 300px; overflow-y: auto;" id="userTicketsList">
+                                        <!-- Loaded dynamically -->
+                                        <div style="text-align: center; padding: 30px; color: var(--fg-muted); font-size: 11px;">
+                                            No support tickets submitted yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 15. SYSTEM SETTINGS PANEL -->
+                <section id="settings-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">System Settings & Help Center</h2>
+                    </div>
+
+                    <div class="dual-column-layout">
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <h3>System Visual Preferences</h3>
+                                <p class="muted-text margin-bottom">Configure currency symbol formatting and custom system visuals.</p>
+                                <form id="settingsConfigForm" autocomplete="off">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="settingsTheme">System Visual Theme</label>
+                                            <select id="settingsTheme">
+                                                <option value="Dark">Dark Mode Theme</option>
+                                                <option value="Light">Light Mode Theme</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="settingsCurrency">Ledger Currency Format (Country)</label>
+                                            <select id="settingsCurrency">
+                                                <option value="$">US Dollar ($) - United States</option>
+                                                <option value="₹">Indian Rupee (₹) - India</option>
+                                                <option value="€">Euro (€) - Eurozone</option>
+                                                <option value="£">British Pound (£) - United Kingdom</option>
+                                                <option value="¥">Japanese Yen (¥) - Japan</option>
+                                                <option value="A$">Australian Dollar (A$) - Australia</option>
+                                                <option value="C$">Canadian Dollar (C$) - Canada</option>
+                                                <option value="CHF">Swiss Franc (CHF) - Switzerland</option>
+                                                <option value="元">Chinese Yuan (元) - China</option>
+                                                <option value="kr">Swedish Krona (kr) - Sweden</option>
+                                                <option value="NZ$">New Zealand Dollar (NZ$) - New Zealand</option>
+                                                <option value="R">South African Rand (R) - South Africa</option>
+                                                <option value="S$">Singapore Dollar (S$) - Singapore</option>
+                                                <option value="HK$">Hong Kong Dollar (HK$) - Hong Kong</option>
+                                                <option value="R$">Brazilian Real (R$) - Brazil</option>
+                                                <option value="₽">Russian Ruble (₽) - Russia</option>
+                                                <option value="AED">UAE Dirham (AED) - United Arab Emirates</option>
+                                                <option value="SAR">Saudi Riyal (SAR) - Saudi Arabia</option>
+                                                <option value="₺">Turkish Lira (₺) - Turkey</option>
+                                                <option value="₩">South Korean Won (₩) - South Korea</option>
+                                                <option value="Mex$">Mexican Peso (Mex$) - Mexico</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="settingsExportFolder">Database Reports Export Directory</label>
+                                        <input type="text" id="settingsExportFolder" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block margin-top">✓ Apply Global System Preferences</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="nlp-column">
+                            <!-- Visual User Profile Showcase Card -->
+                            <div class="card card-padding center-content" style="text-align: center; margin-bottom: 20px;">
+                                <div style="position: relative; display: inline-block; margin-bottom: 15px;">
+                                    <img id="profCardAvatar2" src="/static/assets/default_avatar.svg" class="avatar-preview-circle" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover;" alt="Avatar">
+                                    <span style="position: absolute; bottom: 0; right: 0; background: var(--success); color: white; border-radius: 50%; padding: 4px 8px; font-size: 10px; font-weight: bold; border: 2px solid var(--bg-card);">ACTIVE</span>
+                                </div>
+                                <h3 id="profCardFullName2" style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--fg-title); margin: 0 0 4px 0;">Suman Singh</h3>
+                                <span id="profCardRole2" class="brand-tag" style="font-size: 10px; color: var(--primary); font-weight: 700; letter-spacing: 1px;">Administrator</span>
+                                <p id="profCardEmail2" style="font-size: 12px; color: var(--fg-muted); margin: 4px 0 15px 0;">sumansingh@neuraspend.com</p>
+                                
+                                <div style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                                    <h4 style="font-size: 10px; text-transform: uppercase; color: var(--fg-muted); font-weight: 700; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">Account Metadata Dossier</h4>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Username ID:</span>
+                                        <span id="profCardUsername2" style="font-weight: 600; color: #ffffff;">sumansingh</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Workspace Role:</span>
+                                        <span id="profCardShowcaseRole2" style="font-weight: 600; color: var(--primary);">Administrator</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Created Date:</span>
+                                        <span id="profCardCreatedAt2" style="font-weight: 600; color: #ffffff;">2026-05-20 12:00</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                                        <span style="color: var(--fg-muted);">Last System Login:</span>
+                                        <span id="profCardLastLogin2" style="font-weight: 600; color: #30d158;">2026-05-24 10:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section><!-- 16. ADMINISTRATIVE AUDITS PANEL -->
+                <section id="admin-panel" class="panel-section">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Administrative Operations Audit Control</h2>
+                    </div>
+                    
+                    <div class="dual-column-layout">
+                        <!-- Audit table -->
+                        <div class="form-column">
+                            <div class="card card-padding">
+                                <h3>Historical Workspace System Log Audits</h3>
+                                <div class="table-container list-box" style="margin-top:15px;">
+                                    <table class="ledger-table min-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Timestamp</th>
+                                                <th>User</th>
+                                                <th>Action</th>
+                                                <th>Auditable Info</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminAuditLogsBody">
+                                            <!-- Dynamically loaded -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Management -->
+                        <div class="nlp-column">
+                            <div class="card card-padding">
+                                <h3>Register New Employee Account</h3>
+                                <form id="adminAddUserForm" autocomplete="off" style="margin-top:15px;">
+                                    <div class="form-group-block">
+                                        <label for="admNewUsername">Username</label>
+                                        <input type="text" id="admNewUsername" required>
+                                    </div>
+                                    <div class="form-group-block">
+                                        <label for="admNewPassword">Temporary Password</label>
+                                        <input type="password" id="admNewPassword" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block margin-top">🛡️ Register Workspace Employee</button>
+                                </form>
+                            </div>
+                            
+                            <div class="card card-padding margin-top">
+                                <h3>Registered Workspace Users</h3>
+                                <div class="table-container list-box" style="margin-top:15px; max-height: 200px; overflow-y: auto;">
+                                    <table class="ledger-table min-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Username</th>
+                                                <th>Role</th>
+                                                <th>Created At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminUsersListBody">
+                                            <!-- Loaded dynamically via AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card card-padding margin-top">
+                        <h3>Active Customer Support Tickets</h3>
+                        <p class="muted-text" style="font-size:11px; margin-bottom:15px;">Track and resolve user support inquiries from the SQLite database.</p>
+                        <div class="table-container list-box" style="max-height: 250px; overflow-y: auto;">
+                            <table class="ledger-table min-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>User</th>
+                                        <th>Category</th>
+                                        <th>Subject</th>
+                                        <th>Message Details</th>
+                                        <th>Date Created</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminSupportTicketsBody">
+                                    <!-- Loaded dynamically via AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- DYNAMIC EDIT POPUP MODAL -->
+    <div id="editExpenseModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-family:var(--font-heading); font-weight:700; margin:0;">Modify Expense Transaction</h3>
+                <button type="button" id="btnCloseEditModal" class="close-modal-x">✕</button>
+            </div>
+            
+            <form id="editExpenseForm" autocomplete="off">
+                <input type="hidden" id="editExpId">
+                <div class="form-group-block">
+                    <label for="editExpTitle">Transaction Title</label>
+                    <input type="text" id="editExpTitle" required>
+                </div>
+                <div class="form-group-block">
+                    <label for="editExpDescription">Description Details</label>
+                    <input type="text" id="editExpDescription">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editExpAmount">Amount Outflow</label>
+                        <input type="number" id="editExpAmount" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editExpDate">Calendar Date</label>
+                        <input type="date" id="editExpDate" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editExpCategory">Category Channel</label>
+                        <select id="editExpCategory">
+                            <option value="Food & Dining">Food & Dining</option>
+                            <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                            <option value="Travel & Transport">Travel & Transport</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editExpPaymentMethod">Payment Instrument</label>
+                        <select id="editExpPaymentMethod">
+                            <option value="UPI">UPI</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group-block">
+                    <label>UPDATE RECEIPT ATTACHMENT</label>
+                    <input type="file" id="editExpAttachment" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block margin-top">✓ Adjust Ledger Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DYNAMIC SAVINGS GOAL ADD MODAL -->
+    <div id="addGoalModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-family:var(--font-heading); font-weight:700; margin:0;">Create New Savings Target</h3>
+                <button type="button" id="btnCloseGoalModal" class="close-modal-x">✕</button>
+            </div>
+            
+            <form id="addGoalForm" autocomplete="off">
+                <div class="form-group-block">
+                    <label for="goalTitle">Goal Title Target</label>
+                    <input type="text" id="goalTitle" placeholder="e.g. Vacation Fund" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="goalTarget">Target Sum (₹)</label>
+                        <input type="number" id="goalTarget" step="10" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goalSaved">Currently Saved (₹)</label>
+                        <input type="number" id="goalSaved" step="10" placeholder="0.00" value="0">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block margin-top">✓ Create Goal Target</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Controller references -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

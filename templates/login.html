@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraSpend - Enterprise Authentication</title>
+    <!-- Fonts Outfit & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        (function() {
+            var theme = localStorage.getItem('neuraspend_theme') || 'Dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            var style = document.createElement('style');
+            var bg = theme === 'Light' ? '#f2f2f7' : '#060609';
+            var color = theme === 'Light' ? '#2c2c2e' : '#ffffff';
+            style.innerHTML = 'body, .login-body, .splash-screen { background-color: ' + bg + ' !important; color: ' + color + ' !important; }';
+            document.head.appendChild(style);
+        })();
+    </script>
+    <style>
+        /* Custom aesthetics for clean centered authentication */
+        body {
+            background-color: var(--bg-main) !important;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-main);
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .login-card {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 45px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: var(--transition);
+        }
+
+        .brand-logo-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .brand-logo {
+            width: 64px;
+            height: 64px;
+            filter: drop-shadow(0 0 12px rgba(10, 132, 255, 0.65));
+        }
+
+        .login-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 30px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 30%, #b2c0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .login-header p {
+            font-size: 13px;
+            color: var(--fg-muted);
+            margin-bottom: 0;
+        }
+
+        label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input, select {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            color: #ffffff !important;
+            height: 48px;
+            font-size: 13px !important;
+            padding: 12px 16px !important;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15) !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .password-toggle-btn {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            transition: var(--transition);
+        }
+
+        .password-toggle-btn:hover {
+            color: #ffffff;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .auth-link {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .auth-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--fg-body);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-label input {
+            height: 16px;
+            width: 16px;
+            cursor: pointer;
+        }
+
+        .btn-access {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            height: 48px;
+            border-radius: 12px !important;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.2);
+            transition: var(--transition);
+        }
+
+        .btn-access:hover:not(:disabled) {
+            background-color: var(--primary-hover) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 132, 255, 0.3);
+        }
+
+        .avatar-upload-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-preview-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            object-fit: cover;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .avatar-file-btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .avatar-file-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .strength-meter {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .strength-bar-container {
+            height: 4px;
+            width: 100%;
+            background-color: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+
+        .strength-weak { background-color: var(--danger); width: 25%; }
+        .strength-medium { background-color: var(--warning); width: 50%; }
+        .strength-strong { background-color: #30d158; width: 75%; }
+        .strength-very-strong { background-color: #00e676; width: 100%; }
+
+        .strength-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--fg-muted);
+            text-transform: uppercase;
+        }
+
+        .recovery-question-card {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .recovery-question-card strong {
+            display: block;
+            font-size: 9px;
+            color: var(--primary);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Splash and Welcome overlays visual styling */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #060609;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #ffffff;
+        }
+
+        .splash-logo-container {
+            margin-bottom: 25px;
+        }
+
+        .splash-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #ffffff 40%, #b2c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .splash-subtitle {
+            font-size: 12px;
+            color: var(--fg-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .splash-progress-container {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .splash-progress-track {
+            height: 6px;
+            width: 100%;
+            background-color: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .splash-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #b2c0ff, var(--primary));
+            transition: width 0.4s cubic-bezier(0.1, 0.8, 0.25, 1);
+        }
+
+        .splash-status {
+            font-size: 11px;
+            color: var(--fg-muted);
+        }
+
+        .welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(6, 6, 9, 0.98);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.5s ease;
+        }
+
+        .welcome-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            animation: welcomeScaleUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes welcomeScaleUp {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .welcome-avatar-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #b2c0ff;
+            object-fit: cover;
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-pulse {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid #b2c0ff;
+            border-radius: 50%;
+            animation: welcomePulse 1.8s infinite ease-in-out;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        @keyframes welcomePulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            100% { transform: scale(1.15); opacity: 0; }
+        }
+
+        .welcome-title {
+            font-size: 14px;
+            color: var(--fg-muted);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+
+        .welcome-username {
+            font-family: 'Outfit', sans-serif;
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #b2c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: -5px;
+        }
+
+        .welcome-status {
+            font-size: 13px;
+            color: var(--fg-muted);
+        }
+
+        .welcome-loader {
+            height: 4px;
+            width: 220px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .welcome-loader-progress {
+            height: 100%;
+            width: 0%;
+            background: #b2c0ff;
+            animation: welcomeProgress 1.4s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+        }
+
+        @keyframes welcomeProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .copyright-footer {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Light Mode Adaptive Overrides */
+        body[data-theme="Light"] .login-body {
+            background-color: var(--bg-main) !important;
+        }
+        body[data-theme="Light"] .login-card {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme="Light"] .login-header h1 {
+            background: linear-gradient(135deg, #1c1c1e 30%, var(--primary) 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        body[data-theme="Light"] label {
+            color: #1c1c1e !important;
+            opacity: 0.8;
+        }
+        body[data-theme="Light"] input, body[data-theme="Light"] select {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d1d6 !important;
+            color: #1c1c1e !important;
+        }
+        body[data-theme="Light"] .auth-link {
+            color: var(--primary) !important;
+        }
+        body[data-theme="Light"] .checkbox-label {
+            color: #1c1c1e !important;
+        }
+        body[data-theme="Light"] .copyright-footer {
+            color: rgba(0, 0, 0, 0.4) !important;
+        }
+        body[data-theme="Light"] .recovery-question-card {
+            background-color: rgba(0, 0, 0, 0.02) !important;
+            border: 1px dashed rgba(0, 0, 0, 0.15) !important;
+            color: #1c1c1e !important;
+        }
+        body[data-theme="Light"] .splash-screen, body[data-theme="Light"] .welcome-overlay {
+            background-color: var(--bg-main) !important;
+            color: #1c1c1e !important;
+        }
+        body[data-theme="Light"] .splash-title, body[data-theme="Light"] .welcome-username {
+            background: linear-gradient(135deg, #1c1c1e 40%, var(--primary)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- SPLASH SCREEN START -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-logo-container">
+            <svg class="splash-logo" viewBox="0 0 100 100" style="width: 80px; height: 80px; filter: drop-shadow(0 0 12px rgba(10, 132, 255, 0.65));">
+                <line x1="30" y1="70" x2="30" y2="30" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="30" y1="30" x2="42" y2="55" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="42" y1="55" x2="58" y2="45" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="58" y1="45" x2="70" y2="70" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="70" y1="70" x2="70" y2="30" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="30" y1="70" x2="42" y2="55" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <line x1="58" y1="45" x2="70" y2="30" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                <polygon points="30,30 42,55 30,70" fill="rgba(10, 132, 255, 0.15)" />
+                <polygon points="42,55 58,45 30,30" fill="rgba(10, 132, 255, 0.1)" />
+                <polygon points="42,55 58,45 70,70" fill="rgba(10, 132, 255, 0.1)" />
+                <polygon points="58,45 70,30 70,70" fill="rgba(10, 132, 255, 0.15)" />
+                <circle cx="30" cy="30" r="5" fill="#0a84ff" />
+                <circle cx="30" cy="70" r="5" fill="#0a84ff" />
+                <circle cx="42" cy="55" r="5" fill="#0a84ff" />
+                <circle cx="58" cy="45" r="5" fill="#0a84ff" />
+                <circle cx="70" cy="30" r="5" fill="#0a84ff" />
+                <circle cx="70" cy="70" r="5" fill="#0a84ff" />
+            </svg>
+        </div>
+        <h1 class="splash-title">NeuraSpend</h1>
+        <p class="splash-subtitle">Intelligent Expense Management</p>
+        <div class="splash-progress-container">
+            <div class="splash-progress-track">
+                <div id="splashProgressBar" class="splash-progress-bar"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                <span id="splashStatusText" class="splash-status">Initializing System...</span>
+                <span id="splashPercentage" class="splash-status" style="font-weight:700; color:#b2c0ff;">0%</span>
+            </div>
+        </div>
+    </div>
+    <!-- SPLASH SCREEN END -->
+
+    <!-- WELCOME OVERLAY START -->
+    <div id="welcomeOverlay" class="welcome-overlay hide">
+        <div class="welcome-card">
+            <div class="welcome-avatar-wrapper">
+                <img id="welcomeAvatar" src="/static/assets/default_avatar.svg" class="welcome-avatar" alt="Avatar">
+                <div class="welcome-pulse"></div>
+            </div>
+            <h2 class="welcome-title">Welcome Back</h2>
+            <h1 id="welcomeUser" class="welcome-username">Suman Singh</h1>
+            <p class="welcome-status">Establishing secure user session...</p>
+            <div class="welcome-loader">
+                <div class="welcome-loader-progress"></div>
+            </div>
+        </div>
+    </div>
+    <!-- WELCOME OVERLAY END -->
+
+    <div class="login-bg-glows">
+        <div class="glow-sphere sphere-1" style="background-color: var(--primary); filter: blur(140px); opacity: 0.12;"></div>
+        <div class="glow-sphere sphere-2" style="background-color: #30d158; filter: blur(140px); opacity: 0.12;"></div>
+    </div>
+    
+    <div class="login-body">
+        <div class="login-container">
+            <!-- 1. LOGIN VIEW -->
+            <div id="loginFormView" class="login-card">
+                <div class="brand-logo-wrapper">
+                    <svg class="splash-logo" viewBox="0 0 100 100" style="width: 56px; height: 56px; filter: drop-shadow(0 0 10px rgba(10, 132, 255, 0.65));">
+                        <line x1="30" y1="70" x2="30" y2="30" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                        <line x1="30" y1="30" x2="42" y2="55" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                        <line x1="42" y1="55" x2="58" y2="45" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                        <line x1="58" y1="45" x2="70" y2="70" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                        <line x1="70" y1="70" x2="70" y2="30" stroke="rgba(10, 132, 255, 0.4)" stroke-width="2.5" />
+                        <polygon points="30,30 42,55 30,70" fill="rgba(10, 132, 255, 0.12)" />
+                        <polygon points="42,55 58,45 70,70" fill="rgba(10, 132, 255, 0.08)" />
+                        <circle cx="30" cy="30" r="4.5" fill="#0a84ff" />
+                        <circle cx="30" cy="70" r="4.5" fill="#0a84ff" />
+                        <circle cx="42" cy="55" r="4.5" fill="#0a84ff" />
+                        <circle cx="58" cy="45" r="4.5" fill="#0a84ff" />
+                        <circle cx="70" cy="30" r="4.5" fill="#0a84ff" />
+                        <circle cx="70" cy="70" r="4.5" fill="#0a84ff" />
+                    </svg>
+                </div>
+                <div class="login-header" style="text-align: center; margin-bottom: 30px;">
+                    <h1>NeuraSpend</h1>
+                    <p>Enter your credentials to access your financial dashboard.</p>
+                </div>
+                
+                <form id="loginForm" autocomplete="off">
+                    <div class="form-group">
+                        <label for="username">USERNAME / EMAIL</label>
+                        <input type="text" id="username" class="form-control btn-block" placeholder="Enter username or email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                            <label style="margin-bottom:0;">PASSWORD</label>
+                            <a href="#" id="btnGoToForgot" class="auth-link">Forgot Password?</a>
+                        </div>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" class="form-control btn-block" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle-btn" style="position: absolute; right: 15px; background: none; border: none; cursor: pointer;">👁</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; margin-bottom: 25px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe"> Remember Me
+                        </label>
+                    </div>
+                    
+                    <div id="errorAlert" class="error-alert-box hide">
+                        <span class="error-icon">⚠️</span>
+                        <span id="errorMessage" class="error-text">Invalid credentials.</span>
+                    </div>
+                    
+                    <button type="submit" id="loginSubmitBtn" class="btn btn-access btn-block">
+                        Access Secure Terminal
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 25px;">
+                    <p style="font-size: 13px; color: var(--fg-muted);">
+                        Don't have an account? <a href="#" id="btnGoToRegister" class="auth-link">Register here</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. REGISTRATION VIEW -->
+            <div id="registerFormView" class="login-card hide">
+                <div class="login-header" style="text-align: center; margin-bottom: 30px;">
+                    <h1>Create Account</h1>
+                    <p>Join the intelligent financial management platform</p>
+                </div>
+                
+                <form id="registerForm" autocomplete="off" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="regFullName">FULL NAME</label>
+                        <input type="text" id="regFullName" name="full_name" class="form-control btn-block" placeholder="e.g. Suman Singh" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regUsername">USERNAME</label>
+                            <input type="text" id="regUsername" name="username" class="form-control btn-block" placeholder="e.g. sumansingh" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regMobile">MOBILE NUMBER</label>
+                            <input type="text" id="regMobile" name="mobile" class="form-control btn-block" placeholder="e.g. 9876543210">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="regEmail">EMAIL ADDRESS</label>
+                        <input type="text" id="regEmail" name="email" class="form-control btn-block" placeholder="suman@domain.com" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regPassword">PASSWORD</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="regPassword" name="password" class="form-control btn-block" placeholder="Min 8 chars" required>
+                                <button type="button" class="password-toggle-btn" style="position: absolute; right: 15px; background: none; border: none; cursor: pointer;">👁</button>
+                            </div>
+                            <div class="strength-meter">
+                                <div class="strength-bar-container">
+                                    <div id="strengthBar" class="strength-bar"></div>
+                                </div>
+                                <span id="strengthText" class="strength-label">Password Strength</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="regConfirmPassword">CONFIRM PASSWORD</label>
+                            <input type="password" id="regConfirmPassword" name="confirm_password" class="form-control btn-block" placeholder="Repeat password" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regSecQuestion">SECURITY QUESTION</label>
+                            <select id="regSecQuestion" name="security_question" class="form-control btn-block" style="background-color:rgba(255,255,255,0.03);">
+                                <option value="What is your favorite color?">What is your favorite color?</option>
+                                <option value="What is your high school?">What is your high school?</option>
+                                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                                <option value="What was your first pet name?">What was your first pet name?</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="regSecAnswer">SECURITY ANSWER</label>
+                            <input type="text" id="regSecAnswer" name="security_answer" class="form-control btn-block" placeholder="Precise answer" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label>PROFILE PICTURE (AVATAR)</label>
+                        <div class="avatar-upload-group">
+                            <img id="avatarPreview" src="/static/assets/default_avatar.svg" class="avatar-preview-circle" alt="Avatar">
+                            <button type="button" id="btnUploadTrigger" class="avatar-file-btn">Choose Image</button>
+                            <input type="file" id="regAvatar" name="profile_photo" accept="image/*" class="hide">
+                        </div>
+                    </div>
+                    
+                    <div id="registerErrorAlert" class="error-alert-box hide">
+                        <span class="error-icon">⚠️</span>
+                        <span id="registerErrorMessage" class="error-text">Registration error details</span>
+                    </div>
+                    
+                    <button type="submit" id="registerSubmitBtn" class="btn btn-access btn-block">
+                        CREATE ACCOUNT
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 25px;">
+                    <a href="#" id="btnBackToLogin1" class="auth-link">Back to Secure Login</a>
+                </div>
+            </div>
+
+            <!-- 3. FORGOT PASSWORD VIEW -->
+            <div id="forgotFormView" class="login-card hide">
+                <div class="login-header" style="text-align: center; margin-bottom: 30px;">
+                    <h1>Recover Password</h1>
+                    <p>Reset security credentials offline</p>
+                </div>
+                
+                <!-- Step 1: Input Identifier -->
+                <div id="recoveryStep1">
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label for="forgotIdentifier">IDENTITY IDENTIFIER</label>
+                        <input type="text" id="forgotIdentifier" class="form-control btn-block" placeholder="Enter username or registered email">
+                    </div>
+                    <button type="button" id="btnFetchQuestion" class="btn btn-access btn-block">
+                        VERIFY & FETCH QUESTION
+                    </button>
+                </div>
+
+                <!-- Step 2: Answer Challenge & Reset -->
+                <div id="recoveryStep2" class="hide">
+                    <div class="recovery-question-card">
+                        <strong>Security Challenge</strong>
+                        <span id="recoveryQuestionText">Security Question loading...</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="forgotAnswer">SECURITY ANSWER</label>
+                        <input type="text" id="forgotAnswer" class="form-control btn-block" placeholder="Type answer precisely">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label for="forgotNewPassword">NEW PASSWORD (MIN 8 CHARS)</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="forgotNewPassword" class="form-control btn-block" placeholder="Enter new strong password">
+                            <button type="button" class="password-toggle-btn" style="position: absolute; right: 15px; background: none; border: none; cursor: pointer;">👁</button>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnSubmitRecovery" class="btn btn-access btn-block">
+                        ✓ RESET PASSWORD
+                    </button>
+                </div>
+
+                <div id="forgotErrorAlert" class="error-alert-box hide margin-top">
+                    <span class="error-icon">⚠️</span>
+                    <span id="forgotErrorMessage" class="error-text">Reset error details</span>
+                </div>
+                
+                <div style="text-align: center; margin-top: 25px;">
+                    <a href="#" id="btnBackToLogin2" class="auth-link">Back to Secure Login</a>
+                </div>
+            </div>
+
+            <!-- Sleek copyright footer -->
+            <div class="copyright-footer">
+                © 2026 NeuraSpend Financial. All Rights Reserved.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Splash Screen Animations and Simulating Loading Modules
+        window.addEventListener('load', () => {
+            const progress = document.getElementById('splashProgressBar');
+            const status = document.getElementById('splashStatusText');
+            const percent = document.getElementById('splashPercentage');
+            const splash = document.getElementById('splashScreen');
+
+            const steps = [
+                { p: 15, t: 'Initializing Database...' },
+                { p: 30, t: 'Loading User Profiles...' },
+                { p: 48, t: 'Loading Analytics Engine...' },
+                { p: 65, t: 'Loading Budget Center...' },
+                { p: 80, t: 'Loading Dashboard Components...' },
+                { p: 92, t: 'Preparing Reports Module...' },
+                { p: 100, t: 'Launching NeuraSpend...' }
+            ];
+
+            let cur = 0;
+            function loadStep() {
+                if (cur < steps.length) {
+                    const targetPercent = steps[cur].p;
+                    progress.style.width = targetPercent + '%';
+                    status.textContent = steps[cur].t;
+
+                    // Animate percentage counting smoothly
+                    let currentPercent = cur === 0 ? 0 : steps[cur-1].p;
+                    const diff = targetPercent - currentPercent;
+                    let stepCount = 0;
+                    const percentInterval = setInterval(() => {
+                        if (currentPercent >= targetPercent) {
+                            clearInterval(percentInterval);
+                        } else {
+                            currentPercent++;
+                            percent.textContent = currentPercent + '%';
+                        }
+                    }, Math.floor(450 / diff));
+
+                    cur++;
+                    setTimeout(loadStep, 500); // 7 steps * 500ms = 3.5 seconds
+                } else {
+                    setTimeout(() => {
+                        splash.style.opacity = '0';
+                        splash.style.pointerEvents = 'none';
+                    }, 400);
+                }
+            }
+            setTimeout(loadStep, 200);
+        });
+
+        // Remember Me username loading
+        document.addEventListener('DOMContentLoaded', () => {
+            const remembered = localStorage.getItem('rememberedUsername');
+            if (remembered) {
+                document.getElementById('username').value = remembered;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+
+        // 3. Navigation View Switches
+        const vLogin = document.getElementById('loginFormView');
+        const vRegister = document.getElementById('registerFormView');
+        const vForgot = document.getElementById('forgotFormView');
+
+        const step1 = document.getElementById('recoveryStep1');
+        const step2 = document.getElementById('recoveryStep2');
+
+        document.getElementById('btnGoToRegister').addEventListener('click', (e) => {
+            e.preventDefault();
+            vLogin.classList.add('hide');
+            vRegister.classList.remove('hide');
+        });
+
+        document.getElementById('btnGoToForgot').addEventListener('click', (e) => {
+            e.preventDefault();
+            vLogin.classList.add('hide');
+            vForgot.classList.remove('hide');
+            step1.classList.remove('hide');
+            step2.classList.add('hide');
+            document.getElementById('forgotErrorAlert').classList.add('hide');
+        });
+
+        const resetToLogin = (e) => {
+            if(e) e.preventDefault();
+            vRegister.classList.add('hide');
+            vForgot.classList.add('hide');
+            vLogin.classList.remove('hide');
+            document.getElementById('errorAlert').classList.add('hide');
+        };
+
+        document.getElementById('btnBackToLogin1').addEventListener('click', resetToLogin);
+        document.getElementById('btnBackToLogin2').addEventListener('click', resetToLogin);
+
+        // 4. Password Visibility Toggles
+        document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const wrapper = btn.closest('.password-input-wrapper');
+                const input = wrapper.querySelector('input');
+                const isPass = input.getAttribute('type') === 'password';
+                input.setAttribute('type', isPass ? 'text' : 'password');
+                btn.textContent = isPass ? '🙈' : '👁';
+            });
+        });
+
+        // 5. Registration Avatar Upload Preview
+        const avatarBtn = document.getElementById('btnUploadTrigger');
+        const avatarInput = document.getElementById('regAvatar');
+        const avatarPreview = document.getElementById('avatarPreview');
+
+        avatarBtn.addEventListener('click', () => avatarInput.click());
+
+        avatarInput.addEventListener('change', () => {
+            const file = avatarInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    avatarPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 6. Password Strength Meter calculations
+        const regPassword = document.getElementById('regPassword');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+
+        regPassword.addEventListener('input', () => {
+            const val = regPassword.value;
+            let score = 0;
+
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            strengthBar.className = 'strength-bar'; // reset class
+            
+            if (val.length === 0) {
+                strengthText.textContent = 'Password Strength';
+                strengthBar.style.width = '0%';
+            } else if (score <= 1) {
+                strengthText.textContent = 'Weak';
+                strengthBar.classList.add('strength-weak');
+            } else if (score === 2) {
+                strengthText.textContent = 'Medium';
+                strengthBar.classList.add('strength-medium');
+            } else if (score === 3) {
+                strengthText.textContent = 'Strong';
+                strengthBar.classList.add('strength-strong');
+            } else if (score === 4) {
+                strengthText.textContent = 'Very Strong';
+                strengthBar.classList.add('strength-very-strong');
+            }
+        });
+
+        // 7. SUBMIT LOGIN AJAX
+        const loginForm = document.getElementById('loginForm');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorAlert.classList.add('hide');
+            loginSubmitBtn.disabled = true;
+            loginSubmitBtn.textContent = 'Verifying...';
+
+            const userVal = document.getElementById('username').value.trim();
+            const passVal = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(userVal)}&password=${encodeURIComponent(passVal)}`
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedUsername', userVal);
+                    } else {
+                        localStorage.removeItem('rememberedUsername');
+                    }
+                    
+                    // Show custom scale-up Welcome transition overlay
+                    const welcomeOverlay = document.getElementById('welcomeOverlay');
+                    const welcomeUser = document.getElementById('welcomeUser');
+                    const welcomeAvatar = document.getElementById('welcomeAvatar');
+                    
+                    welcomeUser.textContent = result.user.full_name;
+                    if (result.user.profile_photo) {
+                        welcomeAvatar.src = result.user.profile_photo;
+                    }
+                    
+                    welcomeOverlay.classList.remove('hide');
+                    
+                    // Delay for welcome visual scale transition then redirect
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1450);
+                } else {
+                    errorMessage.textContent = result.message || 'Verification failed.';
+                    errorAlert.classList.remove('hide');
+                    document.getElementById('password').value = '';
+                    loginSubmitBtn.disabled = false;
+                    loginSubmitBtn.textContent = 'Access Secure Terminal';
+                }
+            } catch (err) {
+                errorMessage.textContent = 'Authentication service unreachable.';
+                errorAlert.classList.remove('hide');
+                loginSubmitBtn.disabled = false;
+                loginSubmitBtn.textContent = 'Access Secure Terminal';
+            }
+        });
+
+        // 8. SUBMIT REGISTRATION AJAX
+        const registerForm = document.getElementById('registerForm');
+        const registerErrorAlert = document.getElementById('registerErrorAlert');
+        const registerErrorMessage = document.getElementById('registerErrorMessage');
+        const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            registerErrorAlert.classList.add('hide');
+
+            const p1 = document.getElementById('regPassword').value;
+            const p2 = document.getElementById('regConfirmPassword').value;
+
+            if (p1 !== p2) {
+                registerErrorMessage.textContent = 'Passwords do not match.';
+                registerErrorAlert.classList.remove('hide');
+                return;
+            }
+
+            registerSubmitBtn.disabled = true;
+            registerSubmitBtn.textContent = 'Creating account...';
+
+            const formData = new FormData(registerForm);
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert(result.message);
+                    registerForm.reset();
+                    avatarPreview.src = "/static/assets/default_avatar.svg";
+                    registerSubmitBtn.disabled = false;
+                    registerSubmitBtn.textContent = 'CREATE ACCOUNT';
+                    resetToLogin();
+                } else {
+                    registerErrorMessage.textContent = result.message || 'Creation failed.';
+                    registerErrorAlert.classList.remove('hide');
+                    registerSubmitBtn.disabled = false;
+                    registerSubmitBtn.textContent = 'CREATE ACCOUNT';
+                }
+            } catch (err) {
+                registerErrorMessage.textContent = 'Registration service unavailable.';
+                registerErrorAlert.classList.remove('hide');
+                registerSubmitBtn.disabled = false;
+                registerSubmitBtn.textContent = 'CREATE ACCOUNT';
+            }
+        });
+
+        // 9. FORGOT PASSWORD RECOVERY WIZARD AJAX
+        const forgotIdentifier = document.getElementById('forgotIdentifier');
+        const forgotAnswer = document.getElementById('forgotAnswer');
+        const forgotNewPassword = document.getElementById('forgotNewPassword');
+        const recoveryQuestionText = document.getElementById('recoveryQuestionText');
+        
+        const forgotErrorAlert = document.getElementById('forgotErrorAlert');
+        const forgotErrorMessage = document.getElementById('forgotErrorMessage');
+
+        let verifiedIdentifier = '';
+
+        document.getElementById('btnFetchQuestion').addEventListener('click', async () => {
+            forgotErrorAlert.classList.add('hide');
+            const ident = forgotIdentifier.value.trim();
+            if (!ident) {
+                forgotErrorMessage.textContent = 'Please enter username or email address.';
+                forgotErrorAlert.classList.remove('hide');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/forgot/question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(ident)}`
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    verifiedIdentifier = ident;
+                    recoveryQuestionText.textContent = result.question;
+                    step1.classList.add('hide');
+                    step2.classList.remove('hide');
+                } else {
+                    forgotErrorMessage.textContent = result.message || 'Lookup failed.';
+                    forgotErrorAlert.classList.remove('hide');
+                }
+            } catch (err) {
+                forgotErrorMessage.textContent = 'Recovery database unreachable.';
+                forgotErrorAlert.classList.remove('hide');
+            }
+        });
+
+        document.getElementById('btnSubmitRecovery').addEventListener('click', async () => {
+            forgotErrorAlert.classList.add('hide');
+            const ans = forgotAnswer.value.trim();
+            const newP = forgotNewPassword.value;
+
+            if (!ans || !newP) {
+                forgotErrorMessage.textContent = 'Please fill in both response fields.';
+                forgotErrorAlert.classList.remove('hide');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/forgot/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(verifiedIdentifier)}&security_answer=${encodeURIComponent(ans)}&new_password=${encodeURIComponent(newP)}`
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert(result.message);
+                    forgotIdentifier.value = '';
+                    forgotAnswer.value = '';
+                    forgotNewPassword.value = '';
+                    resetToLogin();
+                } else {
+                    forgotErrorMessage.textContent = result.message || 'Verification failed.';
+                    forgotErrorAlert.classList.remove('hide');
+                }
+            } catch (err) {
+                forgotErrorMessage.textContent = 'Failed to submit password recovery challenge.';
+                forgotErrorAlert.classList.remove('hide');
+            }
+        });
+    </script>
+</body>
+</html>
