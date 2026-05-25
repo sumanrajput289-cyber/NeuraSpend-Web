@@ -48,7 +48,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo Step 5: Pushing to GitHub repository...
-git push -u origin main
+git push -f origin main
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] Push failed. 
