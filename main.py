@@ -306,13 +306,14 @@ def handle_web_register():
                 if file_size > 2 * 1024 * 1024:  # 2MB
                     return jsonify({"success": False, "message": "Image file too large. Max size allowed is 2MB."}), 400
 
-                save_dir = os.path.join(app.root_path, "static", "assets", "avatars")
-                if not os.path.exists(save_dir):
-                    os.makedirs(save_dir)
-                filename = secure_filename(f"avatar_{username}_{int(time.time())}_{file.filename}")
-                filepath = os.path.join(save_dir, filename)
-                file.save(filepath)
-                profile_photo_path = f"/static/assets/avatars/{filename}"
+                import base64
+                file_data = file.read()
+                encoded_image = base64.b64encode(file_data).decode('utf-8')
+                ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
+                mime_type = f"image/{ext}"
+                if ext == 'svg':
+                    mime_type = "image/svg+xml"
+                profile_photo_path = f"data:{mime_type};base64,{encoded_image}"
 
         # Hash Password
         import hashlib
@@ -794,13 +795,14 @@ def handle_profile_update():
                 if file_size > 2 * 1024 * 1024:  # 2MB
                     return jsonify({"success": False, "message": "Image file too large. Max size allowed is 2MB."}), 400
                 
-                save_dir = os.path.join(app.root_path, "static", "assets", "avatars")
-                if not os.path.exists(save_dir):
-                    os.makedirs(save_dir)
-                filename = secure_filename(f"avatar_{user_id}_{int(time.time())}_{file.filename}")
-                filepath = os.path.join(save_dir, filename)
-                file.save(filepath)
-                avatar_path = f"/static/assets/avatars/{filename}"
+                import base64
+                file_data = file.read()
+                encoded_image = base64.b64encode(file_data).decode('utf-8')
+                ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
+                mime_type = f"image/{ext}"
+                if ext == 'svg':
+                    mime_type = "image/svg+xml"
+                avatar_path = f"data:{mime_type};base64,{encoded_image}"
 
         with get_db_connection() as conn:
             cursor = conn.cursor()
