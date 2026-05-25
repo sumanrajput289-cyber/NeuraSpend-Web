@@ -1220,13 +1220,21 @@ def handle_settings_api():
         export_folder = request.form.get("export_folder", "").strip()
 
         if not export_folder:
-            export_folder = os.path.join(app.root_path, "exports")
+            if os.environ.get("VERCEL") or os.environ.get("NOW_REGION"):
+                export_folder = "/tmp/exports"
+            else:
+                export_folder = os.path.join(app.root_path, "exports")
         
         try:
             if not os.path.exists(export_folder):
                 os.makedirs(export_folder, exist_ok=True)
         except Exception:
-            return jsonify({"success": False, "message": "Invalid or write-protected export directory."}), 400
+            try:
+                export_folder = "/tmp/exports"
+                if not os.path.exists(export_folder):
+                    os.makedirs(export_folder, exist_ok=True)
+            except Exception:
+                return jsonify({"success": False, "message": "Invalid or write-protected export directory."}), 400
 
         settings = load_user_settings()
         settings["theme"] = theme
