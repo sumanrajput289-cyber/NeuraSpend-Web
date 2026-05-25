@@ -310,9 +310,15 @@ def handle_web_register():
                 file_data = file.read()
                 encoded_image = base64.b64encode(file_data).decode('utf-8')
                 ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
-                mime_type = f"image/{ext}"
-                if ext == 'svg':
-                    mime_type = "image/svg+xml"
+                mime_map = {
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'svg': 'image/svg+xml',
+                    'webp': 'image/webp'
+                }
+                mime_type = mime_map.get(ext, 'image/png')
                 profile_photo_path = f"data:{mime_type};base64,{encoded_image}"
 
         # Hash Password
@@ -799,9 +805,15 @@ def handle_profile_update():
                 file_data = file.read()
                 encoded_image = base64.b64encode(file_data).decode('utf-8')
                 ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
-                mime_type = f"image/{ext}"
-                if ext == 'svg':
-                    mime_type = "image/svg+xml"
+                mime_map = {
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'svg': 'image/svg+xml',
+                    'webp': 'image/webp'
+                }
+                mime_type = mime_map.get(ext, 'image/png')
                 avatar_path = f"data:{mime_type};base64,{encoded_image}"
 
         with get_db_connection() as conn:

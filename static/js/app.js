@@ -1507,6 +1507,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('profCardFullName').textContent = data.user.full_name;
                 document.getElementById('profCardRole').textContent = data.user.role;
                 document.getElementById('profCardAvatar').src = data.user.profile_photo;
+                
+                const profAvatarPreview = document.getElementById('profAvatarPreview');
+                if (profAvatarPreview) {
+                    profAvatarPreview.src = data.user.profile_photo;
+                }
+                const topbarAvatarImg = document.getElementById('topbarAvatarImg');
+                if (topbarAvatarImg) {
+                    topbarAvatarImg.src = data.user.profile_photo;
+                }
 
                 // Populate showcase dossier cards
                 const docEmail = document.getElementById('profCardEmail');
