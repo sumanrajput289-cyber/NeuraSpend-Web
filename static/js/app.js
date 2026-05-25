@@ -1547,26 +1547,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function compressImage(file, maxWidth, maxHeight, quality, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(function(blob) {
+                    callback(blob);
+                }, 'image/jpeg', quality);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
     profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(profileForm);
-
-        try {
-            const response = await fetch('/api/profile/update', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                alert('✓ User profile updated successfully!');
-                loadDashboardKPIs();
-                loadProfileStats();
-            } else {
-                alert(`Profile update failed: ${result.message}`);
+        
+        const avatarFile = profAvatar.files[0];
+        
+        const submitForm = async (fileBlob) => {
+            const formData = new FormData(profileForm);
+            if (fileBlob) {
+                formData.set('profile_photo', fileBlob, 'avatar.jpg');
             }
-        } catch (err) {
-            alert('Server connection error during profile update.');
+
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✓ User profile updated successfully!');
+                    loadDashboardKPIs();
+                    loadProfileStats();
+                } else {
+                    alert(`Profile update failed: ${result.message}`);
+                }
+            } catch (err) {
+                alert('Server connection error during profile update.');
+            }
+        };
+
+        if (avatarFile) {
+            // Compress image to max 800x800 and 85% quality to bypass Vercel serverless request limits
+            compressImage(avatarFile, 800, 800, 0.85, (compressedBlob) => {
+                submitForm(compressedBlob);
+            });
+        } else {
+            submitForm(null);
         }
     });
 
