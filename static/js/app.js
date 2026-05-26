@@ -1375,44 +1375,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceStatus = document.getElementById('voiceStatus');
     const voiceTranscribeResult = document.getElementById('voiceTranscribeResult');
 
-    voiceMicBtn.addEventListener('click', () => {
-        toggleVoiceRecording(voiceMicBtn, voiceStatus, (success, data) => {
-            if (success) {
-                const parsed = data;
-                voiceTranscribeResult.classList.remove('hidden');
-                voiceTranscribeResult.innerHTML = `
-                    <strong>Extracted Phrase:</strong> "${parsed.raw_text}"<br><br>
-                    <strong>Match Details:</strong><br>
-                    • Title: ${parsed.title}<br>
-                    • Category: ${parsed.category}<br>
-                    • Amount: ${activeCurrency}${parsed.amount.toFixed(2)}<br><br>
-                    <button id="btnCommitVoice" class="btn btn-primary btn-block">✓ Save Voice Entry</button>
-                `;
+    if (voiceMicBtn && voiceStatus && voiceTranscribeResult) {
+        voiceMicBtn.addEventListener('click', () => {
+            if (typeof toggleVoiceRecording === 'function') {
+                toggleVoiceRecording(voiceMicBtn, voiceStatus, (success, data) => {
+                    if (success) {
+                        const parsed = data;
+                        voiceTranscribeResult.classList.remove('hidden');
+                        voiceTranscribeResult.innerHTML = `
+                            <strong>Extracted Phrase:</strong> "${parsed.raw_text}"<br><br>
+                            <strong>Match Details:</strong><br>
+                            • Title: ${parsed.title}<br>
+                            • Category: ${parsed.category}<br>
+                            • Amount: ${activeCurrency}${parsed.amount.toFixed(2)}<br><br>
+                            <button id="btnCommitVoice" class="btn btn-primary btn-block">✓ Save Voice Entry</button>
+                        `;
 
-                document.getElementById('btnCommitVoice').addEventListener('click', async () => {
-                    try {
-                        const response = await fetch('/api/expenses', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `title=${encodeURIComponent(parsed.title)}&description=${encodeURIComponent(`Voice Capture: "${parsed.raw_text}"`)}&amount=${parsed.amount}&category=${encodeURIComponent(parsed.category)}&payment_method=UPI&transaction_date=${new Date().toISOString().split('T')[0]}`
+                        document.getElementById('btnCommitVoice').addEventListener('click', async () => {
+                            try {
+                                const response = await fetch('/api/expenses', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                    body: `title=${encodeURIComponent(parsed.title)}&description=${encodeURIComponent(`Voice Capture: "${parsed.raw_text}"`)}&amount=${parsed.amount}&category=${encodeURIComponent(parsed.category)}&payment_method=UPI&transaction_date=${new Date().toISOString().split('T')[0]}`
+                                });
+
+                                const result = await response.json();
+                                if (result.success) {
+                                    alert('Voice transaction committed successfully.');
+                                    voiceTranscribeResult.classList.add('hidden');
+                                    loadDashboardKPIs();
+                                }
+                            } catch (err) {
+                                alert('Database transaction write failure.');
+                            }
                         });
-
-                        const result = await response.json();
-                        if (result.success) {
-                            alert('Voice transaction committed successfully.');
-                            voiceTranscribeResult.classList.add('hidden');
-                            loadDashboardKPIs();
-                        }
-                    } catch (err) {
-                        alert('Database transaction write failure.');
+                    } else {
+                        alert(`Voice Input Alert: ${data}`);
+                        voiceStatus.textContent = 'Microphone service idle.';
                     }
                 });
             } else {
-                alert(`Voice Input Alert: ${data}`);
-                voiceStatus.textContent = 'Microphone service idle.';
+                alert('Voice capture engine is not loaded. Please contact support.');
             }
         });
-    });
+    }
 
     // ----------------------------------------------------------------------
     // 15. SECURE DATABASE BACKUP & RESTORE
