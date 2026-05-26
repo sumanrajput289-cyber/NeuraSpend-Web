@@ -52,11 +52,28 @@ class FlaskSessionWrapper:
         if key == "mobile":
             return session.get("mobile", "9876543210")
         if key == "profile_photo":
-            return session.get("profile_photo", "/static/assets/default_avatar.svg")
+            # Bypasses Flask 4KB cookie limit by querying SQLite directly!
+            try:
+                user_id = session.get("user_id")
+                if user_id:
+                    with get_db_connection() as conn:
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT profile_photo FROM users WHERE id = ?", (user_id,))
+                        row = cursor.fetchone()
+                        if row and row["profile_photo"]:
+                            return row["profile_photo"]
+            except Exception:
+                pass
+            return "/static/assets/default_avatar.svg"
         return session.get(key)
 
     def __setitem__(self, key, value):
-        session[key] = value
+        if key == "profile_photo" and value and value.startswith("data:image/"):
+            # Do NOT write heavy Base64 image string to Flask session cookie (max 4KB size limit)
+            # Instead, keep a placeholder in session and let __getitem__ load directly from SQLite!
+            session["profile_photo"] = "/static/assets/default_avatar.svg"
+        else:
+            session[key] = value
 
     def get(self, key, default=None):
         return session.get(key, default)
